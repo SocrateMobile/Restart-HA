@@ -168,7 +168,7 @@ class RestartHAPanel extends HTMLElement {
         ) {
           await this._hass.callService("hassio", "host_reboot");
         } else {
-          await this._hass.callService("homeassistant", "restart");
+          await this._hass.callService("homeassistant", "restart", { safe_mode: false });
         }
       } else {
         if (
@@ -178,7 +178,7 @@ class RestartHAPanel extends HTMLElement {
         ) {
           await this._hass.callService("hassio", "homeassistant_restart");
         } else {
-          await this._hass.callService("homeassistant", "restart");
+          await this._hass.callService("homeassistant", "restart", { safe_mode: false });
         }
       }
     } catch (e) {
@@ -212,18 +212,18 @@ class RestartHAPanel extends HTMLElement {
 
       try {
         if (action === "quick_restart") {
-          try {
-            await this._hass.callService("homeassistant", "restart");
-          } catch (svcErr) {
-            if (
-              this._hass.services &&
-              this._hass.services.hassio &&
-              this._hass.services.hassio.homeassistant_restart
-            ) {
+          if (
+            this._hass.services &&
+            this._hass.services.hassio &&
+            this._hass.services.hassio.homeassistant_restart
+          ) {
+            try {
               await this._hass.callService("hassio", "homeassistant_restart");
-            } else {
-              throw svcErr;
+            } catch (hassioErr) {
+              await this._hass.callService("homeassistant", "restart", { safe_mode: false });
             }
+          } else {
+            await this._hass.callService("homeassistant", "restart", { safe_mode: false });
           }
         } else if (action === "system_restart") {
           if (
@@ -233,7 +233,7 @@ class RestartHAPanel extends HTMLElement {
           ) {
             await this._hass.callService("hassio", "host_reboot");
           } else {
-            await this._hass.callService("homeassistant", "restart");
+            await this._hass.callService("homeassistant", "restart", { safe_mode: false });
           }
         }
       } catch (err) {
