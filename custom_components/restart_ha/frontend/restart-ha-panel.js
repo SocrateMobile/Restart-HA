@@ -4,6 +4,7 @@
  *  - Modal popin with Quick Restart, System Restart, Cancel
  *  - "Mettre tout à jour" option with auto-restart interception
  *  - Real-time continuous item progress bar and global progress bar
+ *  - Instant reliable restart execution (direct callService + WebSocket fallback)
  *  - Zero-flicker architecture with stable DOM updates (no innerHTML re-renders)
  *  - Sidebar "MAJ" gradient badge with persistent MutationObserver
  */
@@ -14,6 +15,7 @@ class RestartHAPanel extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._hass = null;
     this._domCreated = false;
+    this._restartTriggered = false;
     this._status = {
       is_running: false,
       current_action: null,
@@ -61,7 +63,6 @@ class RestartHAPanel extends HTMLElement {
   async _init() {
     if (!this._hass) return;
 
-    // Fetch initial status and available updates from backend
     try {
       const res = await this._hass.callWS({ type: "restart_ha/get_status" });
       if (res) {
@@ -71,7 +72,6 @@ class RestartHAPanel extends HTMLElement {
       this._status.available_updates = this._scanAvailableUpdates();
     }
 
-    // Subscribe to progress events
     try {
       if (this._hass.connection && this._hass.connection.subscribeEvents) {
         this._unsubProgress = await this._hass.connection.subscribeEvents(
@@ -79,12 +79,17 @@ class RestartHAPanel extends HTMLElement {
             if (event.data) {
               this._status = { ...this._status, ...event.data };
               this._updateUI();
-              if (
-                !this._status.is_running &&
-                this._status.current_action === "cancel" &&
-                this._status.global_progress === 100
-              ) {
-                setTimeout(() => this._navigateHome(), 2500);
+
+              // When updates have completed
+              if (!this._status.is_running && this._status.global_progress === 100) {
+                const act = this._status.current_action;
+                if (act === "cancel") {
+                  setTimeout(() => this._navigateHome(), 2500);
+                } else if (act === "quick_restart") {
+                  this._triggerFinalRestart("quick_restart");
+                } else if (act === "system_restart") {
+                  this._triggerFinalRestart("system_restart");
+                }
               }
             }
           },
@@ -136,35 +141,103 @@ class RestartHAPanel extends HTMLElement {
     }
   }
 
+  async _triggerFinalRestart(action) {
+    if (this._restartTriggered) return;
+    this._restartTriggered = true;
+
+    try {
+      if (action === "system_restart") {
+        if (
+          this._hass.services &&
+          this._hass.services.hassio &&
+          this._hass.services.hassio.host_reboot
+        ) {
+          await this._hass.callService("hassio", "host_reboot");
+        } else {
+          await this._hass.callService("homeassistant", "restart");
+        }
+      } else {
+        if (
+          this._hass.services &&
+          this._hass.services.hassio &&
+          this._hass.services.hassio.homeassistant_restart
+        ) {
+          await this._hass.callService("hassio", "homeassistant_restart");
+        } else {
+          await this._hass.callService("homeassistant", "restart");
+        }
+      }
+    } catch (e) {
+      console.debug("Final restart trigger:", e);
+    }
+  }
+
   async _handleAction(action) {
     if (!this._hass) return;
 
     const updates = this._status.available_updates || [];
     const shouldUpdateAll = this._updateAllChecked && updates.length > 0;
 
+    // Direct mode: No updates requested
     if (!shouldUpdateAll) {
       if (action === "cancel") {
         this._navigateHome();
         return;
       }
+
+      this._status.is_running = true;
+      this._status.status_message =
+        action === "quick_restart"
+          ? "Redémarrage de Home Assistant en cours..."
+          : "Redémarrage du système en cours...";
+      this._updateUI();
+
       try {
-        await this._hass.callWS({
-          type: "restart_ha/start_process",
-          action: action,
-          update_all: false,
-        });
-        this._status.status_message =
-          action === "quick_restart"
-            ? "Redémarrage de Home Assistant en cours..."
-            : "Redémarrage système en cours...";
-        this._updateUI();
-      } catch (e) {
-        alert("Erreur lors du déclenchement du redémarrage : " + e.message);
+        if (action === "quick_restart") {
+          try {
+            await this._hass.callService("homeassistant", "restart");
+          } catch (svcErr) {
+            if (
+              this._hass.services &&
+              this._hass.services.hassio &&
+              this._hass.services.hassio.homeassistant_restart
+            ) {
+              await this._hass.callService("hassio", "homeassistant_restart");
+            } else {
+              throw svcErr;
+            }
+          }
+        } else if (action === "system_restart") {
+          if (
+            this._hass.services &&
+            this._hass.services.hassio &&
+            this._hass.services.hassio.host_reboot
+          ) {
+            await this._hass.callService("hassio", "host_reboot");
+          } else {
+            await this._hass.callService("homeassistant", "restart");
+          }
+        }
+      } catch (err) {
+        console.warn("Direct service call encountered error, calling backend process:", err);
+        try {
+          await this._hass.callWS({
+            type: "restart_ha/start_process",
+            action: action,
+            update_all: false,
+          });
+        } catch (wsErr) {
+          alert("Erreur lors du redémarrage : " + wsErr.message);
+          this._status.is_running = false;
+          this._updateUI();
+        }
       }
       return;
     }
 
+    // Pipeline mode: "Mettre tout à jour" checked
     try {
+      this._restartTriggered = false;
       this._status.is_running = true;
       this._status.current_action = action;
       this._status.global_progress = 0;
@@ -807,7 +880,6 @@ class RestartHAPanel extends HTMLElement {
       </div>
     `;
 
-    // Cache elements for high performance zero-flicker updates
     const root = this.shadowRoot;
     this._el = {
       backdrop: root.getElementById("backdrop"),
@@ -835,7 +907,6 @@ class RestartHAPanel extends HTMLElement {
       cancelBtnDesc: root.getElementById("cancelBtnDesc"),
     };
 
-    // Attach stable event listeners
     this._el.closeBtn.onclick = () => this._navigateHome();
     this._el.backdrop.onclick = (e) => {
       if (e.target === this._el.backdrop && !this._status.is_running) {
@@ -848,9 +919,6 @@ class RestartHAPanel extends HTMLElement {
     this._el.cancelBtn.onclick = () => this._handleAction("cancel");
   }
 
-  /**
-   * Surgical zero-flicker UI updates (never wipes innerHTML)
-   */
   _updateUI() {
     if (!this._el) return;
 
@@ -878,7 +946,6 @@ class RestartHAPanel extends HTMLElement {
       this._el.updatesContainer.style.display = "block";
       this._el.updatesSummaryCount.textContent = `${updateCount} élément${updateCount > 1 ? "s" : ""}`;
 
-      // Only rebuild items if count or targets changed
       const listHtml = updates
         .map(
           (u) => `
@@ -904,10 +971,8 @@ class RestartHAPanel extends HTMLElement {
       this._el.statusMsgText.textContent = statusMsg || "Traitement en cours...";
       this._el.headerGlobalPct.textContent = `${globalProgress}%`;
 
-      // Intercept alert
       this._el.interceptAlert.style.display = isIntercepted ? "flex" : "none";
 
-      // Global progress
       const total = this._status.total_updates || updateCount || 0;
       const idx = this._status.current_index || 0;
       if (total > 0 && isRunning) {
@@ -918,7 +983,6 @@ class RestartHAPanel extends HTMLElement {
       this._el.globalProgressPct.textContent = `${globalProgress}%`;
       this._el.globalProgressFill.style.width = `${globalProgress}%`;
 
-      // Current Item progress
       if (isRunning && this._status.current_entity_name) {
         this._el.itemProgressSection.style.display = "block";
         this._el.itemProgressLabel.textContent = `Élément en cours : ${this._status.current_entity_name}`;

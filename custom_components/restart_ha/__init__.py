@@ -19,6 +19,11 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.typing import ConfigType
 
 try:
+    from homeassistant.core import HassJob
+except ImportError:
+    HassJob = None  # type: ignore[misc,assignment]
+
+try:
     from homeassistant.components.http import StaticPathConfig
 except ImportError:
     StaticPathConfig = None  # type: ignore[misc,assignment]
@@ -64,7 +69,7 @@ class RestartOrchestrator:
         self.errors: list[str] = []
         self.is_blocking_restarts: bool = False
         self.restart_intercepted: bool = False
-        self._original_restart_handler: Any = None
+        self._original_restart_job: Any = None
         self._task: asyncio.Task | None = None
 
     def get_available_updates(self) -> list[dict[str, Any]]:
@@ -137,37 +142,41 @@ class RestartOrchestrator:
         self.restart_intercepted = False
 
         try:
-            if self.hass.services.has_service("homeassistant", "restart"):
-                services_dict = getattr(self.hass.services, "_services", {})
-                ha_services = services_dict.get("homeassistant", {})
-                service_desc = ha_services.get("restart")
-                if service_desc and hasattr(service_desc, "job"):
-                    self._original_restart_handler = service_desc.job
+            services_dict = getattr(self.hass.services, "_services", {})
+            ha_services = services_dict.get("homeassistant", {})
+            service_desc = ha_services.get("restart")
+            if service_desc and hasattr(service_desc, "job"):
+                # Save the real handler ONCE and never forget it
+                if self._original_restart_job is None:
+                    self._original_restart_job = service_desc.job
 
-                    async def intercepted_restart(call: ServiceCall) -> None:
-                        if self.is_blocking_restarts:
-                            _LOGGER.warning(
-                                "Intercepted automatic restart from update component; "
-                                "delaying restart until all updates complete."
-                            )
-                            self.restart_intercepted = True
-                            self.status_message = (
-                                "Redémarrage automatique intercepté et mis en attente..."
-                            )
-                            self.broadcast_progress()
-                            return
+                async def intercepted_restart(call: ServiceCall) -> None:
+                    if self.is_blocking_restarts:
+                        _LOGGER.warning(
+                            "Intercepted automatic restart from update component; "
+                            "delaying restart until all updates complete."
+                        )
+                        self.restart_intercepted = True
+                        self.status_message = (
+                            "Redémarrage automatique intercepté et mis en attente..."
+                        )
+                        self.broadcast_progress()
+                        return
 
-                        if self._original_restart_handler:
-                            target = self._original_restart_handler.target
-                            if asyncio.iscoroutinefunction(target):
-                                await target(call)
-                            else:
-                                await self.hass.async_add_executor_job(target, call)
+                    # Not blocking: execute real handler
+                    if self._original_restart_job:
+                        target = self._original_restart_job.target
+                        if asyncio.iscoroutinefunction(target):
+                            await target(call)
+                        else:
+                            await self.hass.async_add_executor_job(target, call)
 
-                    self.hass.services.async_register(
-                        "homeassistant", "restart", intercepted_restart
-                    )
-                    _LOGGER.info("Restart HA: Interception of homeassistant.restart enabled.")
+                if HassJob is not None:
+                    service_desc.job = HassJob(intercepted_restart)
+                elif hasattr(service_desc.job, "target"):
+                    service_desc.job.target = intercepted_restart
+
+                _LOGGER.info("Restart HA: Interception of homeassistant.restart enabled.")
         except Exception as err:
             _LOGGER.warning("Restart HA: Could not intercept restart service: %s", err)
 
@@ -175,27 +184,47 @@ class RestartOrchestrator:
         """Restore original homeassistant.restart service handler."""
         self.is_blocking_restarts = False
         try:
-            if self._original_restart_handler and hasattr(self._original_restart_handler, "target"):
-                self.hass.services.async_register(
-                    "homeassistant", "restart", self._original_restart_handler.target
-                )
+            services_dict = getattr(self.hass.services, "_services", {})
+            ha_services = services_dict.get("homeassistant", {})
+            service_desc = ha_services.get("restart")
+            if service_desc and self._original_restart_job is not None:
+                service_desc.job = self._original_restart_job
                 _LOGGER.info("Restart HA: Original homeassistant.restart service restored.")
-                self._original_restart_handler = None
         except Exception as err:
             _LOGGER.warning("Restart HA: Could not restore restart service: %s", err)
 
     async def execute_restart_action(self, action: str) -> None:
         """Execute the final restart or action."""
+        self.disable_restart_interception()
+
         if action == ACTION_QUICK_RESTART:
-            _LOGGER.info("Restart HA: Performing Quick Restart (homeassistant.restart)...")
-            await self.hass.services.async_call("homeassistant", "restart")
+            _LOGGER.info("Restart HA: Executing Quick Restart...")
+            try:
+                if self.hass.services.has_service("hassio", "homeassistant_restart"):
+                    await self.hass.services.async_call("hassio", "homeassistant_restart", blocking=False)
+                elif self.hass.services.has_service("homeassistant", "restart"):
+                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+            except Exception as err:
+                _LOGGER.warning("Error calling quick restart service: %s", err)
+                try:
+                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+                except Exception:
+                    pass
+
         elif action == ACTION_SYSTEM_RESTART:
-            _LOGGER.info("Restart HA: Performing System Reboot...")
-            if self.hass.services.has_service("hassio", "host_reboot"):
-                await self.hass.services.async_call("hassio", "host_reboot")
-            else:
-                _LOGGER.info("hassio.host_reboot not found; falling back to homeassistant.restart")
-                await self.hass.services.async_call("homeassistant", "restart")
+            _LOGGER.info("Restart HA: Executing System Reboot...")
+            try:
+                if self.hass.services.has_service("hassio", "host_reboot"):
+                    await self.hass.services.async_call("hassio", "host_reboot", blocking=False)
+                elif self.hass.services.has_service("homeassistant", "restart"):
+                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+            except Exception as err:
+                _LOGGER.warning("Error calling system reboot service: %s", err)
+                try:
+                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+                except Exception:
+                    pass
+
         elif action == ACTION_CANCEL:
             _LOGGER.info("Restart HA: Action is Cancel; no restart performed.")
 
@@ -253,7 +282,6 @@ class RestartOrchestrator:
                         (st.attributes.get("friendly_name") or eid) if st else eid
                     )
                     self.current_entity_progress = 5
-                    # Continuous global progress: strictly starts from current element's share
                     self.global_progress = int(
                         ((idx + (self.current_entity_progress / 100.0)) / self.total_updates)
                         * 100
@@ -288,11 +316,9 @@ class RestartOrchestrator:
                         if pct is not None:
                             self.current_entity_progress = max(5, min(95, int(pct)))
                         else:
-                            # Gently simulate active progress while installing
                             simulated_pct = min(90, simulated_pct + 4)
                             self.current_entity_progress = simulated_pct
 
-                        # Update continuous global progress in real time
                         self.global_progress = int(
                             ((idx + (self.current_entity_progress / 100.0)) / self.total_updates)
                             * 100
@@ -321,7 +347,7 @@ class RestartOrchestrator:
             self.status_message = "Toutes les mises à jour sont terminées !"
             self.global_progress = 100
             self.broadcast_progress()
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(1.2)
 
         except Exception as exc:
             _LOGGER.error("Restart HA: Pipeline failed with error: %s", exc, exc_info=True)
@@ -336,16 +362,16 @@ class RestartOrchestrator:
                 _LOGGER.info("Restart HA: Updates finished, action is Cancel: returning without restart.")
                 self.status_message = "Mises à jour terminées. Redémarrage annulé."
                 self.broadcast_progress()
-            elif action == ACTION_QUICK_RESTART or (action != ACTION_CANCEL and self.restart_intercepted):
-                self.status_message = "Redémarrage de Home Assistant en cours..."
-                self.broadcast_progress()
-                await asyncio.sleep(1)
-                await self.execute_restart_action(ACTION_QUICK_RESTART)
             elif action == ACTION_SYSTEM_RESTART:
                 self.status_message = "Redémarrage du système complet en cours..."
                 self.broadcast_progress()
                 await asyncio.sleep(1)
                 await self.execute_restart_action(ACTION_SYSTEM_RESTART)
+            elif action == ACTION_QUICK_RESTART or self.restart_intercepted:
+                self.status_message = "Redémarrage de Home Assistant en cours..."
+                self.broadcast_progress()
+                await asyncio.sleep(1)
+                await self.execute_restart_action(ACTION_QUICK_RESTART)
 
     def abort_process(self) -> None:
         """Abort currently running process."""
