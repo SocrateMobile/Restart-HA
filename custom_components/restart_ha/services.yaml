@@ -1,0 +1,36 @@
+quick_restart:
+  name: Redémarrage Rapide
+  description: Redémarre Home Assistant immédiatement, avec option préalable de mise à jour globale.
+  fields:
+    update_all:
+      name: Mettre tout à jour
+      description: Applique toutes les mises à jour avant de redémarrer.
+      example: true
+      selector:
+        boolean:
+
+system_restart:
+  name: Redémarrage Système
+  description: Redémarre l'hôte complet (Home Assistant OS / Machine), avec option préalable de mise à jour globale.
+  fields:
+    update_all:
+      name: Mettre tout à jour
+      description: Applique toutes les mises à jour avant de redémarrer.
+      example: true
+      selector:
+        boolean:
+
+update_all:
+  name: Mettre tout à jour
+  description: Exécute l'ensemble des mises à jour disponibles en interceptant les redémarrages intermédiaires.
+  fields:
+    action:
+      name: Action finale
+      description: Action à effectuer à la fin des mises à jour (quick_restart, system_restart, cancel).
+      example: "quick_restart"
+      selector:
+        select:
+          options:
+            - "quick_restart"
+            - "system_restart"
+            - "cancel"
