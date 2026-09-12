@@ -3,6 +3,7 @@
  * Features:
  *  - Modal popin with Quick Restart, System Restart, Cancel
  *  - "Mettre tout à jour" option with auto-restart interception
+ *  - Selective item updates with individual checkboxes (all checked by default)
  *  - Real-time continuous item progress bar and global progress bar
  *  - Instant reliable restart execution (direct callService + WebSocket fallback)
  *  - Zero-flicker architecture with stable DOM updates (no innerHTML re-renders)
@@ -16,6 +17,8 @@ class RestartHAPanel extends HTMLElement {
     this._hass = null;
     this._domCreated = false;
     this._restartTriggered = false;
+    this._selectedEntityIds = new Set();
+    this._selectionInitialized = false;
     this._status = {
       is_running: false,
       current_action: null,
@@ -72,6 +75,9 @@ class RestartHAPanel extends HTMLElement {
       this._status.available_updates = this._scanAvailableUpdates();
     }
 
+    // Initialize all updates as selected by default
+    this._initSelection();
+
     try {
       if (this._hass.connection && this._hass.connection.subscribeEvents) {
         this._unsubProgress = await this._hass.connection.subscribeEvents(
@@ -80,7 +86,6 @@ class RestartHAPanel extends HTMLElement {
               this._status = { ...this._status, ...event.data };
               this._updateUI();
 
-              // When updates have completed
               if (!this._status.is_running && this._status.global_progress === 100) {
                 const act = this._status.current_action;
                 if (act === "cancel") {
@@ -133,6 +138,15 @@ class RestartHAPanel extends HTMLElement {
     return updates;
   }
 
+  _initSelection() {
+    if (this._selectionInitialized) return;
+    const updates = this._status.available_updates || this._scanAvailableUpdates();
+    if (updates.length > 0) {
+      this._selectedEntityIds = new Set(updates.map((u) => u.entity_id));
+      this._selectionInitialized = true;
+    }
+  }
+
   _navigateHome() {
     if (window.history.length > 1) {
       window.history.back();
@@ -175,11 +189,15 @@ class RestartHAPanel extends HTMLElement {
   async _handleAction(action) {
     if (!this._hass) return;
 
-    const updates = this._status.available_updates || [];
-    const shouldUpdateAll = this._updateAllChecked && updates.length > 0;
+    const updates = this._status.available_updates || this._scanAvailableUpdates();
+    const selectedList = updates
+      .filter((u) => this._selectedEntityIds.has(u.entity_id))
+      .map((u) => u.entity_id);
 
-    // Direct mode: No updates requested
-    if (!shouldUpdateAll) {
+    const shouldUpdate = this._updateAllChecked && selectedList.length > 0;
+
+    // Direct mode: No updates requested or none selected
+    if (!shouldUpdate) {
       if (action === "cancel") {
         this._navigateHome();
         return;
@@ -235,21 +253,21 @@ class RestartHAPanel extends HTMLElement {
       return;
     }
 
-    // Pipeline mode: "Mettre tout à jour" checked
+    // Pipeline mode: Selective or all updates
     try {
       this._restartTriggered = false;
       this._status.is_running = true;
       this._status.current_action = action;
       this._status.global_progress = 0;
       this._status.current_entity_progress = 0;
-      this._status.status_message = "Initialisation de la file de mises à jour...";
+      this._status.status_message = "Initialisation des mises à jour sélectionnées...";
       this._updateUI();
 
       await this._hass.callWS({
         type: "restart_ha/start_process",
         action: action,
         update_all: true,
-        entity_ids: updates.map((u) => u.entity_id),
+        entity_ids: selectedList,
       });
     } catch (e) {
       this._status.is_running = false;
@@ -261,6 +279,29 @@ class RestartHAPanel extends HTMLElement {
 
   _toggleUpdateAll(checked) {
     this._updateAllChecked = checked;
+    if (checked) {
+      const updates = this._status.available_updates || this._scanAvailableUpdates();
+      this._selectedEntityIds = new Set(updates.map((u) => u.entity_id));
+    }
+    this._updateUI();
+  }
+
+  _toggleItemSelection(entityId, isChecked) {
+    if (isChecked) {
+      this._selectedEntityIds.add(entityId);
+    } else {
+      this._selectedEntityIds.delete(entityId);
+    }
+    this._updateUI();
+  }
+
+  _toggleSelectAllItems() {
+    const updates = this._status.available_updates || this._scanAvailableUpdates();
+    if (this._selectedEntityIds.size === updates.length) {
+      this._selectedEntityIds.clear();
+    } else {
+      this._selectedEntityIds = new Set(updates.map((u) => u.entity_id));
+    }
     this._updateUI();
   }
 
@@ -525,6 +566,7 @@ class RestartHAPanel extends HTMLElement {
           box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
         }
 
+        /* Updates List Container */
         .updates-container {
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
@@ -545,8 +587,23 @@ class RestartHAPanel extends HTMLElement {
           justify-content: space-between;
         }
 
+        .select-toggle-btn {
+          background: none;
+          border: none;
+          color: #38bdf8;
+          font-size: 12px;
+          cursor: pointer;
+          padding: 2px 6px;
+          border-radius: 4px;
+          transition: background 0.15s;
+        }
+
+        .select-toggle-btn:hover {
+          background: rgba(56, 189, 248, 0.12);
+        }
+
         .updates-list {
-          max-height: 170px;
+          max-height: 190px;
           overflow-y: auto;
           padding: 4px 0;
         }
@@ -558,15 +615,41 @@ class RestartHAPanel extends HTMLElement {
           justify-content: space-between;
           border-bottom: 1px solid rgba(255, 255, 255, 0.03);
           font-size: 13px;
+          cursor: pointer;
+          user-select: none;
+          transition: background 0.15s ease;
+        }
+
+        .update-item:hover {
+          background: rgba(255, 255, 255, 0.04);
         }
 
         .update-item:last-child {
           border-bottom: none;
         }
 
+        .item-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .item-checkbox {
+          width: 17px;
+          height: 17px;
+          margin: 0;
+          cursor: pointer;
+          accent-color: #3b82f6;
+          flex-shrink: 0;
+        }
+
         .item-name {
           font-weight: 500;
           color: #f1f5f9;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .version-tag {
@@ -576,6 +659,8 @@ class RestartHAPanel extends HTMLElement {
           padding: 3px 8px;
           border-radius: 6px;
           color: #38bdf8;
+          flex-shrink: 0;
+          margin-left: 8px;
         }
 
         /* Progress Box */
@@ -771,7 +856,7 @@ class RestartHAPanel extends HTMLElement {
 
           <!-- Body -->
           <div class="body">
-            <!-- Option: Mettre tout à jour -->
+            <!-- Master Checkbox: Mettre tout à jour -->
             <label class="option-card" id="optionCard">
               <div class="option-info">
                 <div class="checkbox-container">
@@ -780,18 +865,21 @@ class RestartHAPanel extends HTMLElement {
                 <div class="option-text">
                   <h4>
                     Mettre tout à jour
-                    <span class="badge-count" id="badgeCount" style="display: none;">0 disponibles</span>
+                    <span class="badge-count" id="badgeCount" style="display: none;">0 sélectionnés</span>
                   </h4>
-                  <p>Applique toutes les mises à jour avant d'exécuter l'action (bloque les redémarrages auto)</p>
+                  <p>Applique les mises à jour sélectionnées avant l'action (bloque les redémarrages auto)</p>
                 </div>
               </div>
             </label>
 
-            <!-- Updates List -->
+            <!-- Updates Selective List -->
             <div class="updates-container" id="updatesContainer">
               <div class="updates-header">
-                <span>Composants prêts à être mis à jour</span>
-                <span id="updatesSummaryCount">0 éléments</span>
+                <span id="updatesSummaryTitle">Mises à jour disponibles</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="updatesSummaryCount" style="font-size: 11px;">0/0 sélectionnés</span>
+                  <button class="select-toggle-btn" id="selectToggleBtn">Tout basculer</button>
+                </div>
               </div>
               <div class="updates-list" id="updatesList"></div>
             </div>
@@ -887,7 +975,9 @@ class RestartHAPanel extends HTMLElement {
       updateAllCb: root.getElementById("updateAllCb"),
       badgeCount: root.getElementById("badgeCount"),
       updatesContainer: root.getElementById("updatesContainer"),
+      updatesSummaryTitle: root.getElementById("updatesSummaryTitle"),
       updatesSummaryCount: root.getElementById("updatesSummaryCount"),
+      selectToggleBtn: root.getElementById("selectToggleBtn"),
       updatesList: root.getElementById("updatesList"),
       progressBox: root.getElementById("progressBox"),
       interceptAlert: root.getElementById("interceptAlert"),
@@ -914,6 +1004,7 @@ class RestartHAPanel extends HTMLElement {
       }
     };
     this._el.updateAllCb.onchange = (e) => this._toggleUpdateAll(e.target.checked);
+    this._el.selectToggleBtn.onclick = () => this._toggleSelectAllItems();
     this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
     this._el.systemBtn.onclick = () => this._handleAction("system_restart");
     this._el.cancelBtn.onclick = () => this._handleAction("cancel");
@@ -923,43 +1014,34 @@ class RestartHAPanel extends HTMLElement {
     if (!this._el) return;
 
     const updates = this._status.available_updates || this._scanAvailableUpdates();
-    const updateCount = updates.length;
+    const totalCount = updates.length;
+    this._initSelection();
+
+    const selectedCount = updates.filter((u) => this._selectedEntityIds.has(u.entity_id)).length;
     const isRunning = this._status.is_running;
     const globalProgress = Math.max(0, Math.min(100, Math.round(this._status.global_progress || 0)));
     const entityProgress = Math.max(0, Math.min(100, Math.round(this._status.current_entity_progress || 0)));
     const statusMsg = this._status.status_message || "";
     const isIntercepted = this._status.restart_intercepted;
 
-    // 1. Update checkbox & count badge
+    // 1. Update master checkbox & count badge
     this._el.updateAllCb.disabled = isRunning;
     this._el.updateAllCb.checked = this._updateAllChecked;
 
-    if (updateCount > 0) {
-      this._el.badgeCount.textContent = `${updateCount} disponible${updateCount > 1 ? "s" : ""}`;
+    if (totalCount > 0 && this._updateAllChecked) {
+      this._el.badgeCount.textContent = `${selectedCount} sélectionné${selectedCount > 1 ? "s" : ""}`;
       this._el.badgeCount.style.display = "inline-block";
     } else {
       this._el.badgeCount.style.display = "none";
     }
 
-    // 2. Updates list
-    if (this._updateAllChecked && updateCount > 0) {
+    // 2. Selective Updates List
+    if (this._updateAllChecked && totalCount > 0) {
       this._el.updatesContainer.style.display = "block";
-      this._el.updatesSummaryCount.textContent = `${updateCount} élément${updateCount > 1 ? "s" : ""}`;
+      this._el.updatesSummaryCount.textContent = `${selectedCount}/${totalCount} sélectionné${selectedCount > 1 ? "s" : ""}`;
 
-      const listHtml = updates
-        .map(
-          (u) => `
-          <div class="update-item">
-            <span class="item-name">${u.title || u.name}</span>
-            <span class="version-tag">${u.installed_version} ➜ ${u.latest_version}</span>
-          </div>
-        `
-        )
-        .join("");
-      if (this._lastListHtml !== listHtml) {
-        this._lastListHtml = listHtml;
-        this._el.updatesList.innerHTML = listHtml;
-      }
+      // Build or update individual item checkboxes
+      this._renderUpdatesList(updates, isRunning);
     } else {
       this._el.updatesContainer.style.display = "none";
     }
@@ -973,7 +1055,7 @@ class RestartHAPanel extends HTMLElement {
 
       this._el.interceptAlert.style.display = isIntercepted ? "flex" : "none";
 
-      const total = this._status.total_updates || updateCount || 0;
+      const total = this._status.total_updates || selectedCount || totalCount || 0;
       const idx = this._status.current_index || 0;
       if (total > 0 && isRunning) {
         this._el.globalProgressLabel.textContent = `Progression globale (${Math.min(idx, total)}/${total})`;
@@ -1001,10 +1083,61 @@ class RestartHAPanel extends HTMLElement {
     this._el.cancelBtn.disabled = isRunning;
     this._el.closeBtn.disabled = isRunning;
 
-    if (this._updateAllChecked && updateCount > 0) {
+    if (this._updateAllChecked && selectedCount > 0) {
       this._el.cancelBtnDesc.textContent = "Applique les mises à jour sans redémarrer";
     } else {
       this._el.cancelBtnDesc.textContent = "Ferme la fenêtre et retourne à l'accueil";
+    }
+  }
+
+  _renderUpdatesList(updates, isRunning) {
+    const listEl = this._el.updatesList;
+    if (!listEl) return;
+
+    // Check if items structure changed
+    const currentKeys = updates.map((u) => u.entity_id).join("|");
+    if (this._lastRenderedKeys !== currentKeys) {
+      this._lastRenderedKeys = currentKeys;
+      listEl.innerHTML = "";
+
+      updates.forEach((u) => {
+        const itemRow = document.createElement("label");
+        itemRow.className = "update-item";
+        itemRow.dataset.entityId = u.entity_id;
+
+        const isChecked = this._selectedEntityIds.has(u.entity_id);
+
+        itemRow.innerHTML = `
+          <div class="item-left">
+            <input type="checkbox" class="item-checkbox" data-entity-id="${u.entity_id}" ${isChecked ? "checked" : ""} ${isRunning ? "disabled" : ""}>
+            <span class="item-name">${u.title || u.name}</span>
+          </div>
+          <span class="version-tag">${u.installed_version} ➜ ${u.latest_version}</span>
+        `;
+
+        const cb = itemRow.querySelector(".item-checkbox");
+        cb.addEventListener("change", (e) => {
+          e.stopPropagation();
+          this._toggleItemSelection(u.entity_id, cb.checked);
+        });
+
+        itemRow.addEventListener("click", (e) => {
+          if (e.target !== cb && !isRunning) {
+            cb.checked = !cb.checked;
+            this._toggleItemSelection(u.entity_id, cb.checked);
+          }
+        });
+
+        listEl.appendChild(itemRow);
+      });
+    } else {
+      // Sync checkbox states without re-creating DOM
+      const checkboxes = listEl.querySelectorAll(".item-checkbox");
+      checkboxes.forEach((cb) => {
+        const eid = cb.dataset.entityId;
+        cb.checked = this._selectedEntityIds.has(eid);
+        cb.disabled = isRunning;
+      });
     }
   }
 }

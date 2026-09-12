@@ -2,7 +2,7 @@
 
 Provides a left sidebar panel with a restart popin dialog, orchestration of all
 updates (integrations, themes, add-ons, core) with item and global progress bars,
-temporary interception of automatic restarts, and sidebar badge MAJ mechanism.
+temporary interception of automatic restarts, selective item updates, and sidebar badge MAJ mechanism.
 """
 from __future__ import annotations
 
@@ -238,7 +238,8 @@ class RestartOrchestrator:
         if self.is_running:
             raise RuntimeError("A restart/update process is already in progress.")
 
-        if not update_all:
+        # If no updates requested, or empty selection passed
+        if not update_all or (entity_ids is not None and len(entity_ids) == 0):
             self.hass.async_create_task(self.execute_restart_action(action))
             return
 
@@ -261,7 +262,7 @@ class RestartOrchestrator:
         """Sequential execution of updates with continuous smooth progress calculation."""
         self.enable_restart_interception()
         try:
-            if entity_ids:
+            if entity_ids is not None:
                 targets = entity_ids
             else:
                 available = self.get_available_updates()
