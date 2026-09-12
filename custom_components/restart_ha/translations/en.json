@@ -1,0 +1,13 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Restart HA",
+        "description": "Do you want to install the Restart HA panel?"
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Only a single instance of Restart HA is allowed."
+    }
+  }
+}
