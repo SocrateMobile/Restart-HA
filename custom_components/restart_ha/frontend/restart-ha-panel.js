@@ -155,31 +155,127 @@ class RestartHAPanel extends HTMLElement {
     }
   }
 
+  async _rebootHost() {
+    this._status.is_running = true;
+    this._status.status_message = "Redémarrage du système en cours...";
+    this._updateUI();
+
+    // 1. Official method from Home Assistant dialog-restart: direct Supervisor API with timeout: null
+    try {
+      await this._hass.callWS({
+        type: "supervisor/api",
+        endpoint: "/host/reboot",
+        method: "post",
+        timeout: null,
+      });
+      return;
+    } catch (wsErr) {
+      // If socket disconnected or closed, host is already rebooting
+      if (!this._hass.connected || !this._hass.connection?.connected) {
+        return;
+      }
+      console.warn("Supervisor API /host/reboot warning, trying service fallback:", wsErr);
+    }
+
+    // 2. Service fallback: hassio.host_reboot
+    try {
+      if (
+        this._hass.services &&
+        this._hass.services.hassio &&
+        this._hass.services.hassio.host_reboot
+      ) {
+        await this._hass.callService("hassio", "host_reboot");
+        return;
+      }
+    } catch (svcErr) {
+      if (!this._hass.connected || !this._hass.connection?.connected) {
+        return;
+      }
+      console.warn("hassio.host_reboot warning, trying backend orchestrator:", svcErr);
+    }
+
+    // 3. Backend orchestrator fallback
+    try {
+      await this._hass.callWS({
+        type: "restart_ha/start_process",
+        action: "system_restart",
+        update_all: false,
+      });
+    } catch (backendErr) {
+      if (!this._hass.connected || !this._hass.connection?.connected) {
+        return;
+      }
+      console.error("System restart failed:", backendErr);
+      const msg =
+        backendErr?.message ||
+        backendErr?.error ||
+        (typeof backendErr === "string" ? backendErr : "Erreur de communication");
+      alert("Erreur lors du redémarrage du système : " + msg);
+      this._status.is_running = false;
+      this._updateUI();
+    }
+  }
+
+  async _quickRestart() {
+    this._status.is_running = true;
+    this._status.status_message = "Redémarrage de Home Assistant en cours...";
+    this._updateUI();
+
+    // 1. Try Supervisor homeassistant_restart if available
+    if (
+      this._hass.services &&
+      this._hass.services.hassio &&
+      this._hass.services.hassio.homeassistant_restart
+    ) {
+      try {
+        await this._hass.callService("hassio", "homeassistant_restart");
+        return;
+      } catch (hassioErr) {
+        if (!this._hass.connected || !this._hass.connection?.connected) {
+          return;
+        }
+        console.warn("hassio.homeassistant_restart warning:", hassioErr);
+      }
+    }
+
+    // 2. Core restart with safe_mode: false
+    try {
+      await this._hass.callService("homeassistant", "restart", { safe_mode: false });
+    } catch (coreErr) {
+      if (!this._hass.connected || !this._hass.connection?.connected) {
+        return;
+      }
+      // 3. Backend orchestrator fallback
+      try {
+        await this._hass.callWS({
+          type: "restart_ha/start_process",
+          action: "quick_restart",
+          update_all: false,
+        });
+      } catch (backendErr) {
+        if (!this._hass.connected || !this._hass.connection?.connected) {
+          return;
+        }
+        const msg =
+          backendErr?.message ||
+          backendErr?.error ||
+          (typeof backendErr === "string" ? backendErr : "Erreur inconnue");
+        alert("Erreur lors du redémarrage : " + msg);
+        this._status.is_running = false;
+        this._updateUI();
+      }
+    }
+  }
+
   async _triggerFinalRestart(action) {
     if (this._restartTriggered) return;
     this._restartTriggered = true;
 
     try {
       if (action === "system_restart") {
-        if (
-          this._hass.services &&
-          this._hass.services.hassio &&
-          this._hass.services.hassio.host_reboot
-        ) {
-          await this._hass.callService("hassio", "host_reboot");
-        } else {
-          await this._hass.callService("homeassistant", "restart", { safe_mode: false });
-        }
+        await this._rebootHost();
       } else {
-        if (
-          this._hass.services &&
-          this._hass.services.hassio &&
-          this._hass.services.hassio.homeassistant_restart
-        ) {
-          await this._hass.callService("hassio", "homeassistant_restart");
-        } else {
-          await this._hass.callService("homeassistant", "restart", { safe_mode: false });
-        }
+        await this._quickRestart();
       }
     } catch (e) {
       console.debug("Final restart trigger:", e);
@@ -203,52 +299,10 @@ class RestartHAPanel extends HTMLElement {
         return;
       }
 
-      this._status.is_running = true;
-      this._status.status_message =
-        action === "quick_restart"
-          ? "Redémarrage de Home Assistant en cours..."
-          : "Redémarrage du système en cours...";
-      this._updateUI();
-
-      try {
-        if (action === "quick_restart") {
-          if (
-            this._hass.services &&
-            this._hass.services.hassio &&
-            this._hass.services.hassio.homeassistant_restart
-          ) {
-            try {
-              await this._hass.callService("hassio", "homeassistant_restart");
-            } catch (hassioErr) {
-              await this._hass.callService("homeassistant", "restart", { safe_mode: false });
-            }
-          } else {
-            await this._hass.callService("homeassistant", "restart", { safe_mode: false });
-          }
-        } else if (action === "system_restart") {
-          if (
-            this._hass.services &&
-            this._hass.services.hassio &&
-            this._hass.services.hassio.host_reboot
-          ) {
-            await this._hass.callService("hassio", "host_reboot");
-          } else {
-            await this._hass.callService("homeassistant", "restart", { safe_mode: false });
-          }
-        }
-      } catch (err) {
-        console.warn("Direct service call encountered error, calling backend process:", err);
-        try {
-          await this._hass.callWS({
-            type: "restart_ha/start_process",
-            action: action,
-            update_all: false,
-          });
-        } catch (wsErr) {
-          alert("Erreur lors du redémarrage : " + wsErr.message);
-          this._status.is_running = false;
-          this._updateUI();
-        }
+      if (action === "system_restart") {
+        await this._rebootHost();
+      } else {
+        await this._quickRestart();
       }
       return;
     }

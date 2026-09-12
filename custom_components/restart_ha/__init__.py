@@ -256,21 +256,34 @@ class RestartOrchestrator:
 
         elif action == ACTION_SYSTEM_RESTART:
             _LOGGER.info("Restart HA: Executing System Reboot...")
+            reboot_done = False
             try:
-                if self.hass.services.has_service("hassio", "host_reboot"):
-                    await self.hass.services.async_call("hassio", "host_reboot", blocking=False)
-                elif self.hass.services.has_service("homeassistant", "restart"):
-                    await self.hass.services.async_call(
-                        "homeassistant", "restart", {"safe_mode": False}, blocking=False
-                    )
+                hassio_comp = self.hass.data.get("hassio")
+                if hassio_comp and hasattr(hassio_comp, "send_command"):
+                    await hassio_comp.send_command("/host/reboot", method="post")
+                    reboot_done = True
             except Exception as err:
-                _LOGGER.warning("Error calling system reboot service: %s", err)
+                _LOGGER.debug("Could not call supervisor /host/reboot: %s", err)
+
+            if not reboot_done and self.hass.services.has_service("hassio", "host_reboot"):
                 try:
-                    await self.hass.services.async_call(
-                        "homeassistant", "restart", {"safe_mode": False}, blocking=False
-                    )
-                except Exception:
-                    pass
+                    await self.hass.services.async_call("hassio", "host_reboot", blocking=False)
+                    reboot_done = True
+                except Exception as err:
+                    _LOGGER.warning("Error calling system reboot service: %s", err)
+
+            if not reboot_done:
+                try:
+                    if self.hass.services.has_service("homeassistant", "restart"):
+                        await self.hass.services.async_call(
+                            "homeassistant", "restart", {"safe_mode": False}, blocking=False
+                        )
+                    else:
+                        stop_handler = self.hass.data.get("homeassistant.stop_handler")
+                        if stop_handler:
+                            await stop_handler(self.hass, True)
+                except Exception as err:
+                    _LOGGER.error("Error calling fallback restart: %s", err)
 
         elif action == ACTION_CANCEL:
             _LOGGER.info("Restart HA: Action is Cancel; no restart performed.")
@@ -282,13 +295,13 @@ class RestartOrchestrator:
         entity_ids: list[str] | None = None,
     ) -> None:
         """Start the requested action or update pipeline in background."""
-        if self.is_running:
-            raise RuntimeError("A restart/update process is already in progress.")
-
         # If no updates requested, or empty selection passed
         if not update_all or (entity_ids is not None and len(entity_ids) == 0):
             self.hass.async_create_task(self.execute_restart_action(action))
             return
+
+        if self.is_running:
+            raise RuntimeError("A restart/update process is already in progress.")
 
         self.is_running = True
         self.current_action = action
