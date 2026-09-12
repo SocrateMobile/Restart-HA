@@ -36,7 +36,7 @@ def get_token() -> str:
             )
             .strip()
         )
-        match = re.search(r":([^@]+)@github\.com", remote)
+        match = re.search(r":([^:@]+)@github\.com", remote)
         if match:
             return match.group(1)
     except Exception:
