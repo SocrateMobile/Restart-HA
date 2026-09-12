@@ -210,7 +210,6 @@ class RestartOrchestrator:
             raise RuntimeError("A restart/update process is already in progress.")
 
         if not update_all:
-            # Immediate action without updates
             self.hass.async_create_task(self.execute_restart_action(action))
             return
 
@@ -230,7 +229,7 @@ class RestartOrchestrator:
     async def _run_update_pipeline(
         self, action: str, entity_ids: list[str] | None
     ) -> None:
-        """Sequential execution of updates with restart interception."""
+        """Sequential execution of updates with continuous smooth progress calculation."""
         self.enable_restart_interception()
         try:
             if entity_ids:
@@ -253,8 +252,12 @@ class RestartOrchestrator:
                     self.current_entity_name = (
                         (st.attributes.get("friendly_name") or eid) if st else eid
                     )
-                    self.current_entity_progress = 10
-                    self.global_progress = int((idx / self.total_updates) * 100)
+                    self.current_entity_progress = 5
+                    # Continuous global progress: strictly starts from current element's share
+                    self.global_progress = int(
+                        ((idx + (self.current_entity_progress / 100.0)) / self.total_updates)
+                        * 100
+                    )
                     self.status_message = (
                         f"Mise à jour de {self.current_entity_name} ({self.current_index}/{self.total_updates})..."
                     )
@@ -273,6 +276,7 @@ class RestartOrchestrator:
                         continue
 
                     wait_seconds = 0
+                    simulated_pct = 10
                     while wait_seconds < 300:
                         await asyncio.sleep(1.5)
                         wait_seconds += 2
@@ -282,8 +286,18 @@ class RestartOrchestrator:
 
                         pct = cur_st.attributes.get("update_percentage")
                         if pct is not None:
-                            self.current_entity_progress = max(10, min(95, int(pct)))
-                            self.broadcast_progress()
+                            self.current_entity_progress = max(5, min(95, int(pct)))
+                        else:
+                            # Gently simulate active progress while installing
+                            simulated_pct = min(90, simulated_pct + 4)
+                            self.current_entity_progress = simulated_pct
+
+                        # Update continuous global progress in real time
+                        self.global_progress = int(
+                            ((idx + (self.current_entity_progress / 100.0)) / self.total_updates)
+                            * 100
+                        )
+                        self.broadcast_progress()
 
                         in_progress = cur_st.attributes.get("in_progress", False)
                         inst_v = cur_st.attributes.get("installed_version")
@@ -294,7 +308,7 @@ class RestartOrchestrator:
                             if (
                                 state_val == "off"
                                 or (inst_v and lat_v and inst_v == lat_v)
-                                or wait_seconds >= 6
+                                or wait_seconds >= 8
                             ):
                                 break
 

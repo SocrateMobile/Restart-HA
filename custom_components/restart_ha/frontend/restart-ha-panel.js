@@ -3,7 +3,8 @@
  * Features:
  *  - Modal popin with Quick Restart, System Restart, Cancel
  *  - "Mettre tout à jour" option with auto-restart interception
- *  - Live item progress bar and global progress bar
+ *  - Real-time continuous item progress bar and global progress bar
+ *  - Zero-flicker architecture with stable DOM updates (no innerHTML re-renders)
  *  - Sidebar "MAJ" gradient badge with persistent MutationObserver
  */
 
@@ -12,6 +13,7 @@ class RestartHAPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this._hass = null;
+    this._domCreated = false;
     this._status = {
       is_running: false,
       current_action: null,
@@ -40,7 +42,10 @@ class RestartHAPanel extends HTMLElement {
   }
 
   connectedCallback() {
-    this._render();
+    if (!this._domCreated) {
+      this._buildDOM();
+      this._domCreated = true;
+    }
     this._syncSidebarBadge();
   }
 
@@ -63,7 +68,6 @@ class RestartHAPanel extends HTMLElement {
         this._status = { ...this._status, ...res };
       }
     } catch (e) {
-      // Fallback: extract available updates directly from hass states
       this._status.available_updates = this._scanAvailableUpdates();
     }
 
@@ -74,7 +78,7 @@ class RestartHAPanel extends HTMLElement {
           (event) => {
             if (event.data) {
               this._status = { ...this._status, ...event.data };
-              this._render();
+              this._updateUI();
               if (
                 !this._status.is_running &&
                 this._status.current_action === "cancel" &&
@@ -91,7 +95,7 @@ class RestartHAPanel extends HTMLElement {
       console.warn("[Restart HA] Could not subscribe to progress events:", e);
     }
 
-    this._render();
+    this._updateUI();
     this._syncSidebarBadge();
   }
 
@@ -135,12 +139,10 @@ class RestartHAPanel extends HTMLElement {
   async _handleAction(action) {
     if (!this._hass) return;
 
-    // Check if updates are requested
     const updates = this._status.available_updates || [];
     const shouldUpdateAll = this._updateAllChecked && updates.length > 0;
 
     if (!shouldUpdateAll) {
-      // Direct action without waiting for updates
       if (action === "cancel") {
         this._navigateHome();
         return;
@@ -155,21 +157,20 @@ class RestartHAPanel extends HTMLElement {
           action === "quick_restart"
             ? "Redémarrage de Home Assistant en cours..."
             : "Redémarrage système en cours...";
-        this._render();
+        this._updateUI();
       } catch (e) {
         alert("Erreur lors du déclenchement du redémarrage : " + e.message);
       }
       return;
     }
 
-    // Action with "Mettre tout à jour"
     try {
       this._status.is_running = true;
       this._status.current_action = action;
       this._status.global_progress = 0;
       this._status.current_entity_progress = 0;
       this._status.status_message = "Initialisation de la file de mises à jour...";
-      this._render();
+      this._updateUI();
 
       await this._hass.callWS({
         type: "restart_ha/start_process",
@@ -180,20 +181,16 @@ class RestartHAPanel extends HTMLElement {
     } catch (e) {
       this._status.is_running = false;
       this._status.status_message = "Erreur : " + e.message;
-      this._render();
+      this._updateUI();
       alert("Impossible de lancer les mises à jour : " + e.message);
     }
   }
 
-  _toggleUpdateAll(e) {
-    this._updateAllChecked = e.target.checked;
-    this._render();
+  _toggleUpdateAll(checked) {
+    this._updateAllChecked = checked;
+    this._updateUI();
   }
 
-  /**
-   * Universal persistent update badge with MutationObserver
-   * Matches the exact gradient badge mechanism developed for DomoLink integrations
-   */
   _syncSidebarBadge() {
     try {
       const ha = document.querySelector("home-assistant");
@@ -209,7 +206,6 @@ class RestartHAPanel extends HTMLElement {
         } catch (e) {}
       }
 
-      // Check if any update entity is available
       let hasAnyUpdate = false;
       if (this._hass && this._hass.states) {
         for (const [id, st] of Object.entries(this._hass.states)) {
@@ -271,20 +267,10 @@ class RestartHAPanel extends HTMLElement {
           }
         }
       }
-    } catch (e) {
-      // Ignore cross-boundary shadow issues
-    }
+    } catch (e) {}
   }
 
-  _render() {
-    const updates = this._status.available_updates || this._scanAvailableUpdates();
-    const updateCount = updates.length;
-    const isRunning = this._status.is_running;
-    const globalProgress = this._status.global_progress || 0;
-    const entityProgress = this._status.current_entity_progress || 0;
-    const statusMsg = this._status.status_message || "";
-    const isIntercepted = this._status.restart_intercepted;
-
+  _buildDOM() {
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -321,16 +307,16 @@ class RestartHAPanel extends HTMLElement {
           border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 20px;
           width: 100%;
-          max-width: 600px;
+          max-width: 620px;
           max-height: 90vh;
           display: flex;
           flex-direction: column;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 30px rgba(59, 130, 246, 0.15);
           overflow: hidden;
-          animation: popin 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+          animation: popin-once 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @keyframes popin {
+        @keyframes popin-once {
           0% { opacity: 0; transform: scale(0.92) translateY(16px); }
           100% { opacity: 1; transform: scale(1) translateY(0); }
         }
@@ -360,6 +346,7 @@ class RestartHAPanel extends HTMLElement {
           justify-content: center;
           box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
           color: white;
+          flex-shrink: 0;
         }
 
         .header-icon svg {
@@ -393,7 +380,7 @@ class RestartHAPanel extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s;
+          transition: background 0.2s;
         }
 
         .close-btn:hover {
@@ -406,10 +393,9 @@ class RestartHAPanel extends HTMLElement {
           overflow-y: auto;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 18px;
         }
 
-        /* Checkbox Box */
         .option-card {
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.08);
@@ -419,7 +405,7 @@ class RestartHAPanel extends HTMLElement {
           align-items: center;
           justify-content: space-between;
           cursor: pointer;
-          transition: border-color 0.2s, background 0.2s;
+          transition: background 0.2s, border-color 0.2s;
         }
 
         .option-card:hover {
@@ -431,12 +417,6 @@ class RestartHAPanel extends HTMLElement {
           display: flex;
           align-items: center;
           gap: 12px;
-        }
-
-        .checkbox-container {
-          position: relative;
-          width: 22px;
-          height: 22px;
         }
 
         .checkbox-container input {
@@ -472,12 +452,12 @@ class RestartHAPanel extends HTMLElement {
           box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
         }
 
-        /* Updates list */
         .updates-container {
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
           background: rgba(0, 0, 0, 0.2);
           overflow: hidden;
+          display: none;
         }
 
         .updates-header {
@@ -493,9 +473,9 @@ class RestartHAPanel extends HTMLElement {
         }
 
         .updates-list {
-          max-height: 180px;
+          max-height: 170px;
           overflow-y: auto;
-          padding: 6px 0;
+          padding: 4px 0;
         }
 
         .update-item {
@@ -525,13 +505,13 @@ class RestartHAPanel extends HTMLElement {
           color: #38bdf8;
         }
 
-        /* Progress Bars */
+        /* Progress Box */
         .progress-box {
           background: rgba(15, 23, 42, 0.6);
-          border: 1px solid rgba(59, 130, 246, 0.3);
+          border: 1px solid rgba(59, 130, 246, 0.35);
           border-radius: 14px;
           padding: 16px;
-          display: flex;
+          display: none;
           flex-direction: column;
           gap: 14px;
         }
@@ -555,7 +535,8 @@ class RestartHAPanel extends HTMLElement {
         .progress-bar-fill {
           height: 100%;
           border-radius: 9999px;
-          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: width 0.35s ease-out;
+          width: 0%;
         }
 
         .fill-item {
@@ -594,12 +575,11 @@ class RestartHAPanel extends HTMLElement {
           border-radius: 8px;
           padding: 8px 12px;
           font-size: 12px;
-          display: flex;
+          display: none;
           align-items: center;
           gap: 8px;
         }
 
-        /* Action Buttons */
         .actions-grid {
           display: flex;
           flex-direction: column;
@@ -616,7 +596,7 @@ class RestartHAPanel extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          transition: all 0.2s ease;
+          transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
           text-align: left;
         }
@@ -624,6 +604,7 @@ class RestartHAPanel extends HTMLElement {
         .btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
+          transform: none !important;
         }
 
         .btn-content {
@@ -640,6 +621,7 @@ class RestartHAPanel extends HTMLElement {
           align-items: center;
           justify-content: center;
           background: rgba(255, 255, 255, 0.2);
+          flex-shrink: 0;
         }
 
         .btn-icon svg {
@@ -665,7 +647,6 @@ class RestartHAPanel extends HTMLElement {
           margin-top: 2px;
         }
 
-        /* Quick Restart Button */
         .btn-quick {
           background: linear-gradient(135deg, #2563eb, #1d4ed8);
           color: #ffffff;
@@ -676,7 +657,6 @@ class RestartHAPanel extends HTMLElement {
           box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
         }
 
-        /* System Reboot Button */
         .btn-system {
           background: linear-gradient(135deg, #d97706, #b45309);
           color: #ffffff;
@@ -687,7 +667,6 @@ class RestartHAPanel extends HTMLElement {
           box-shadow: 0 6px 16px rgba(217, 119, 6, 0.4);
         }
 
-        /* Cancel Button */
         .btn-cancel {
           background: rgba(255, 255, 255, 0.08);
           color: #cbd5e1;
@@ -700,7 +679,7 @@ class RestartHAPanel extends HTMLElement {
       </style>
 
       <div class="backdrop" id="backdrop">
-        <div class="modal">
+        <div class="modal" id="modal">
           <!-- Header -->
           <div class="header">
             <div class="header-title-group">
@@ -712,7 +691,7 @@ class RestartHAPanel extends HTMLElement {
                 <div class="header-subtitle">Options de redémarrage & gestion des mises à jour</div>
               </div>
             </div>
-            <button class="close-btn" id="closeBtn" title="Fermer" ${isRunning ? "disabled" : ""}>
+            <button class="close-btn" id="closeBtn" title="Fermer">
               <svg style="width: 18px; height: 18px; fill: currentColor;" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/></svg>
             </button>
           </div>
@@ -720,103 +699,71 @@ class RestartHAPanel extends HTMLElement {
           <!-- Body -->
           <div class="body">
             <!-- Option: Mettre tout à jour -->
-            <label class="option-card">
+            <label class="option-card" id="optionCard">
               <div class="option-info">
                 <div class="checkbox-container">
-                  <input type="checkbox" id="updateAllCb" ${this._updateAllChecked ? "checked" : ""} ${isRunning ? "disabled" : ""}>
+                  <input type="checkbox" id="updateAllCb" checked>
                 </div>
                 <div class="option-text">
                   <h4>
                     Mettre tout à jour
-                    ${updateCount > 0 ? `<span class="badge-count">${updateCount} disponible${updateCount > 1 ? "s" : ""}</span>` : ""}
+                    <span class="badge-count" id="badgeCount" style="display: none;">0 disponibles</span>
                   </h4>
                   <p>Applique toutes les mises à jour avant d'exécuter l'action (bloque les redémarrages auto)</p>
                 </div>
               </div>
             </label>
 
-            <!-- Updates List (if available and checked) -->
-            ${
-              this._updateAllChecked && updateCount > 0
-                ? `
-              <div class="updates-container">
-                <div class="updates-header">
-                  <span>Composants prêts à être mis à jour</span>
-                  <span>${updateCount} élément${updateCount > 1 ? "s" : ""}</span>
+            <!-- Updates List -->
+            <div class="updates-container" id="updatesContainer">
+              <div class="updates-header">
+                <span>Composants prêts à être mis à jour</span>
+                <span id="updatesSummaryCount">0 éléments</span>
+              </div>
+              <div class="updates-list" id="updatesList"></div>
+            </div>
+
+            <!-- Progress Box -->
+            <div class="progress-box" id="progressBox">
+              <div class="intercept-alert" id="interceptAlert">
+                <span>⚠️ Redémarrage automatique intercepté avec succès : en attente de la fin des autres MAJ.</span>
+              </div>
+
+              <!-- Status line -->
+              <div class="progress-title-row">
+                <span class="status-badge">
+                  <div class="spinner" id="statusSpinner"></div>
+                  <span id="statusMsgText">Traitement en cours...</span>
+                </span>
+                <span id="headerGlobalPct" style="font-size: 14px; font-weight: 700; color: #38bdf8;">0%</span>
+              </div>
+
+              <!-- Global Progress -->
+              <div>
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 5px;">
+                  <span id="globalProgressLabel">Progression globale</span>
+                  <span id="globalProgressPct">0%</span>
                 </div>
-                <div class="updates-list">
-                  ${updates
-                    .map(
-                      (u) => `
-                    <div class="update-item">
-                      <span class="item-name">${u.title || u.name}</span>
-                      <span class="version-tag">${u.installed_version} ➜ ${u.latest_version}</span>
-                    </div>
-                  `
-                    )
-                    .join("")}
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar-fill fill-global" id="globalProgressFill"></div>
                 </div>
               </div>
-            `
-                : ""
-            }
 
-            <!-- Active Progress View -->
-            ${
-              isRunning || statusMsg
-                ? `
-              <div class="progress-box">
-                ${
-                  isIntercepted
-                    ? `
-                  <div class="intercept-alert">
-                    <span>⚠️ Redémarrage automatique intercepté avec succès : en attente de la fin des autres MAJ.</span>
-                  </div>
-                `
-                    : ""
-                }
-                
-                <div class="progress-title-row">
-                  <span class="status-badge">
-                    ${isRunning ? `<div class="spinner"></div>` : ""}
-                    ${statusMsg || "Traitement en cours..."}
-                  </span>
-                  <span>${globalProgress}%</span>
+              <!-- Item Progress -->
+              <div id="itemProgressSection" style="display: none;">
+                <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 5px;">
+                  <span id="itemProgressLabel">Élément en cours</span>
+                  <span id="itemProgressPct">0%</span>
                 </div>
-
-                <!-- Global Progress Bar -->
-                <div>
-                  <div style="font-size: 11px; color: #94a3b8; margin-bottom: 5px;">Progression globale</div>
-                  <div class="progress-bar-wrap">
-                    <div class="progress-bar-fill fill-global" style="width: ${globalProgress}%"></div>
-                  </div>
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar-fill fill-item" id="itemProgressFill"></div>
                 </div>
-
-                <!-- Item Progress Bar (if running and an item is being processed) -->
-                ${
-                  isRunning && this._status.current_entity_name
-                    ? `
-                  <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-bottom: 5px;">
-                      <span>Élément en cours : ${this._status.current_entity_name}</span>
-                      <span>${entityProgress}%</span>
-                    </div>
-                    <div class="progress-bar-wrap">
-                      <div class="progress-bar-fill fill-item" style="width: ${entityProgress}%"></div>
-                    </div>
-                  </div>
-                `
-                    : ""
-                }
               </div>
-            `
-                : ""
-            }
+            </div>
 
             <!-- Action Buttons Grid -->
             <div class="actions-grid">
-              <!-- Quick Restart -->
-              <button class="btn btn-quick" id="quickRestartBtn" ${isRunning ? "disabled" : ""}>
+              <button class="btn btn-quick" id="quickRestartBtn">
                 <div class="btn-content">
                   <div class="btn-icon">
                     <svg viewBox="0 0 24 24"><path d="M7 2V13H10V22L17 10H13L17 2H7Z"/></svg>
@@ -829,8 +776,7 @@ class RestartHAPanel extends HTMLElement {
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
               </button>
 
-              <!-- System Reboot -->
-              <button class="btn btn-system" id="systemRestartBtn" ${isRunning ? "disabled" : ""}>
+              <button class="btn btn-system" id="systemRestartBtn">
                 <div class="btn-content">
                   <div class="btn-icon">
                     <svg viewBox="0 0 24 24"><path d="M4 1H20C21.1 1 22 1.9 22 3V7C22 8.1 21.1 9 20 9H4C2.9 9 2 8.1 2 7V3C2 1.9 2.9 1 4 1M4 11H20C21.1 11 22 11.9 22 13V17C22 18.1 21.1 19 20 19H4C2.9 19 2 18.1 2 17V13C2 11.9 2.9 11 4 11M6 5C6 5.55 6.45 6 7 6C7.55 6 8 5.55 8 5C8 4.45 7.55 4 7 4C6.45 4 6 4.45 6 5M6 15C6 15.55 6.45 16 7 16C7.55 16 8 15.55 8 15C8 14.45 7.55 14 7 14C6.45 14 6 14.45 6 15Z"/></svg>
@@ -843,15 +789,14 @@ class RestartHAPanel extends HTMLElement {
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
               </button>
 
-              <!-- Cancel -->
-              <button class="btn btn-cancel" id="cancelBtn" ${isRunning ? "disabled" : ""}>
+              <button class="btn btn-cancel" id="cancelBtn">
                 <div class="btn-content">
                   <div class="btn-icon">
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/></svg>
                   </div>
                   <div class="btn-titles">
                     <span class="btn-title">Annuler</span>
-                    <span class="btn-desc">${this._updateAllChecked && updateCount > 0 ? "Applique les mises à jour sans redémarrer" : "Ferme la fenêtre et retourne à l'accueil"}</span>
+                    <span class="btn-desc" id="cancelBtnDesc">Ferme la fenêtre et retourne à l'accueil</span>
                   </div>
                 </div>
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
@@ -862,45 +807,140 @@ class RestartHAPanel extends HTMLElement {
       </div>
     `;
 
-    this._attachEventListeners();
+    // Cache elements for high performance zero-flicker updates
+    const root = this.shadowRoot;
+    this._el = {
+      backdrop: root.getElementById("backdrop"),
+      closeBtn: root.getElementById("closeBtn"),
+      updateAllCb: root.getElementById("updateAllCb"),
+      badgeCount: root.getElementById("badgeCount"),
+      updatesContainer: root.getElementById("updatesContainer"),
+      updatesSummaryCount: root.getElementById("updatesSummaryCount"),
+      updatesList: root.getElementById("updatesList"),
+      progressBox: root.getElementById("progressBox"),
+      interceptAlert: root.getElementById("interceptAlert"),
+      statusSpinner: root.getElementById("statusSpinner"),
+      statusMsgText: root.getElementById("statusMsgText"),
+      headerGlobalPct: root.getElementById("headerGlobalPct"),
+      globalProgressLabel: root.getElementById("globalProgressLabel"),
+      globalProgressPct: root.getElementById("globalProgressPct"),
+      globalProgressFill: root.getElementById("globalProgressFill"),
+      itemProgressSection: root.getElementById("itemProgressSection"),
+      itemProgressLabel: root.getElementById("itemProgressLabel"),
+      itemProgressPct: root.getElementById("itemProgressPct"),
+      itemProgressFill: root.getElementById("itemProgressFill"),
+      quickBtn: root.getElementById("quickRestartBtn"),
+      systemBtn: root.getElementById("systemRestartBtn"),
+      cancelBtn: root.getElementById("cancelBtn"),
+      cancelBtnDesc: root.getElementById("cancelBtnDesc"),
+    };
+
+    // Attach stable event listeners
+    this._el.closeBtn.onclick = () => this._navigateHome();
+    this._el.backdrop.onclick = (e) => {
+      if (e.target === this._el.backdrop && !this._status.is_running) {
+        this._navigateHome();
+      }
+    };
+    this._el.updateAllCb.onchange = (e) => this._toggleUpdateAll(e.target.checked);
+    this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
+    this._el.systemBtn.onclick = () => this._handleAction("system_restart");
+    this._el.cancelBtn.onclick = () => this._handleAction("cancel");
   }
 
-  _attachEventListeners() {
-    const shadow = this.shadowRoot;
-    if (!shadow) return;
+  /**
+   * Surgical zero-flicker UI updates (never wipes innerHTML)
+   */
+  _updateUI() {
+    if (!this._el) return;
 
-    const closeBtn = shadow.getElementById("closeBtn");
-    if (closeBtn) {
-      closeBtn.onclick = () => this._navigateHome();
+    const updates = this._status.available_updates || this._scanAvailableUpdates();
+    const updateCount = updates.length;
+    const isRunning = this._status.is_running;
+    const globalProgress = Math.max(0, Math.min(100, Math.round(this._status.global_progress || 0)));
+    const entityProgress = Math.max(0, Math.min(100, Math.round(this._status.current_entity_progress || 0)));
+    const statusMsg = this._status.status_message || "";
+    const isIntercepted = this._status.restart_intercepted;
+
+    // 1. Update checkbox & count badge
+    this._el.updateAllCb.disabled = isRunning;
+    this._el.updateAllCb.checked = this._updateAllChecked;
+
+    if (updateCount > 0) {
+      this._el.badgeCount.textContent = `${updateCount} disponible${updateCount > 1 ? "s" : ""}`;
+      this._el.badgeCount.style.display = "inline-block";
+    } else {
+      this._el.badgeCount.style.display = "none";
     }
 
-    const backdrop = shadow.getElementById("backdrop");
-    if (backdrop) {
-      backdrop.onclick = (e) => {
-        if (e.target === backdrop && !this._status.is_running) {
-          this._navigateHome();
-        }
-      };
+    // 2. Updates list
+    if (this._updateAllChecked && updateCount > 0) {
+      this._el.updatesContainer.style.display = "block";
+      this._el.updatesSummaryCount.textContent = `${updateCount} élément${updateCount > 1 ? "s" : ""}`;
+
+      // Only rebuild items if count or targets changed
+      const listHtml = updates
+        .map(
+          (u) => `
+          <div class="update-item">
+            <span class="item-name">${u.title || u.name}</span>
+            <span class="version-tag">${u.installed_version} ➜ ${u.latest_version}</span>
+          </div>
+        `
+        )
+        .join("");
+      if (this._lastListHtml !== listHtml) {
+        this._lastListHtml = listHtml;
+        this._el.updatesList.innerHTML = listHtml;
+      }
+    } else {
+      this._el.updatesContainer.style.display = "none";
     }
 
-    const updateAllCb = shadow.getElementById("updateAllCb");
-    if (updateAllCb) {
-      updateAllCb.onchange = (e) => this._toggleUpdateAll(e);
+    // 3. Progress Box
+    if (isRunning || statusMsg) {
+      this._el.progressBox.style.display = "flex";
+      this._el.statusSpinner.style.display = isRunning ? "inline-block" : "none";
+      this._el.statusMsgText.textContent = statusMsg || "Traitement en cours...";
+      this._el.headerGlobalPct.textContent = `${globalProgress}%`;
+
+      // Intercept alert
+      this._el.interceptAlert.style.display = isIntercepted ? "flex" : "none";
+
+      // Global progress
+      const total = this._status.total_updates || updateCount || 0;
+      const idx = this._status.current_index || 0;
+      if (total > 0 && isRunning) {
+        this._el.globalProgressLabel.textContent = `Progression globale (${Math.min(idx, total)}/${total})`;
+      } else {
+        this._el.globalProgressLabel.textContent = "Progression globale";
+      }
+      this._el.globalProgressPct.textContent = `${globalProgress}%`;
+      this._el.globalProgressFill.style.width = `${globalProgress}%`;
+
+      // Current Item progress
+      if (isRunning && this._status.current_entity_name) {
+        this._el.itemProgressSection.style.display = "block";
+        this._el.itemProgressLabel.textContent = `Élément en cours : ${this._status.current_entity_name}`;
+        this._el.itemProgressPct.textContent = `${entityProgress}%`;
+        this._el.itemProgressFill.style.width = `${entityProgress}%`;
+      } else {
+        this._el.itemProgressSection.style.display = "none";
+      }
+    } else {
+      this._el.progressBox.style.display = "none";
     }
 
-    const quickBtn = shadow.getElementById("quickRestartBtn");
-    if (quickBtn) {
-      quickBtn.onclick = () => this._handleAction("quick_restart");
-    }
+    // 4. Buttons state & descriptions
+    this._el.quickBtn.disabled = isRunning;
+    this._el.systemBtn.disabled = isRunning;
+    this._el.cancelBtn.disabled = isRunning;
+    this._el.closeBtn.disabled = isRunning;
 
-    const systemBtn = shadow.getElementById("systemRestartBtn");
-    if (systemBtn) {
-      systemBtn.onclick = () => this._handleAction("system_restart");
-    }
-
-    const cancelBtn = shadow.getElementById("cancelBtn");
-    if (cancelBtn) {
-      cancelBtn.onclick = () => this._handleAction("cancel");
+    if (this._updateAllChecked && updateCount > 0) {
+      this._el.cancelBtnDesc.textContent = "Applique les mises à jour sans redémarrer";
+    } else {
+      this._el.cancelBtnDesc.textContent = "Ferme la fenêtre et retourne à l'accueil";
     }
   }
 }
