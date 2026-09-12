@@ -51,6 +51,22 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[str] = ["update"]
 
 
+SCHEMA_RESTART = vol.Schema({vol.Optional("safe_mode", default=False): bool})
+
+
+def _repair_restart_service_schema(hass: HomeAssistant) -> None:
+    """Ensure homeassistant.restart has its valid schema so call.data['safe_mode'] never raises KeyError."""
+    try:
+        services_dict = getattr(hass.services, "_services", {})
+        ha_services = services_dict.get("homeassistant", {})
+        service_desc = ha_services.get("restart")
+        if service_desc and getattr(service_desc, "schema", None) is None:
+            service_desc.schema = SCHEMA_RESTART
+            _LOGGER.info("Restart HA: Repaired missing schema for homeassistant.restart")
+    except Exception as err:
+        _LOGGER.debug("Could not repair homeassistant.restart schema: %s", err)
+
+
 class RestartOrchestrator:
     """Manages sequential updates and safe restarts."""
 
@@ -146,11 +162,21 @@ class RestartOrchestrator:
             ha_services = services_dict.get("homeassistant", {})
             service_desc = ha_services.get("restart")
             if service_desc and hasattr(service_desc, "job"):
-                # Save the real handler ONCE and never forget it
+                # Repair/ensure schema is never None
+                if getattr(service_desc, "schema", None) is None:
+                    service_desc.schema = SCHEMA_RESTART
+
+                # Save the real handler ONCE and never save intercepted_restart as the original
+                current_target = getattr(service_desc.job, "target", None)
                 if self._original_restart_job is None:
-                    self._original_restart_job = service_desc.job
+                    if getattr(current_target, "__name__", "") != "intercepted_restart":
+                        self._original_restart_job = service_desc.job
 
                 async def intercepted_restart(call: ServiceCall) -> None:
+                    # Guarantee safe_mode exists in call.data to prevent KeyError: 'safe_mode'
+                    if hasattr(call, "data") and isinstance(call.data, dict):
+                        call.data.setdefault("safe_mode", False)
+
                     if self.is_blocking_restarts:
                         _LOGGER.warning(
                             "Intercepted automatic restart from update component; "
@@ -170,6 +196,10 @@ class RestartOrchestrator:
                             await target(call)
                         else:
                             await self.hass.async_add_executor_job(target, call)
+                    else:
+                        stop_handler = self.hass.data.get("homeassistant.stop_handler")
+                        if stop_handler:
+                            await stop_handler(self.hass, True)
 
                 if HassJob is not None:
                     service_desc.job = HassJob(intercepted_restart)
@@ -187,9 +217,12 @@ class RestartOrchestrator:
             services_dict = getattr(self.hass.services, "_services", {})
             ha_services = services_dict.get("homeassistant", {})
             service_desc = ha_services.get("restart")
-            if service_desc and self._original_restart_job is not None:
-                service_desc.job = self._original_restart_job
-                _LOGGER.info("Restart HA: Original homeassistant.restart service restored.")
+            if service_desc:
+                if getattr(service_desc, "schema", None) is None:
+                    service_desc.schema = SCHEMA_RESTART
+                if self._original_restart_job is not None:
+                    service_desc.job = self._original_restart_job
+                    _LOGGER.info("Restart HA: Original homeassistant.restart service restored.")
         except Exception as err:
             _LOGGER.warning("Restart HA: Could not restore restart service: %s", err)
 
@@ -203,13 +236,23 @@ class RestartOrchestrator:
                 if self.hass.services.has_service("hassio", "homeassistant_restart"):
                     await self.hass.services.async_call("hassio", "homeassistant_restart", blocking=False)
                 elif self.hass.services.has_service("homeassistant", "restart"):
-                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+                    await self.hass.services.async_call(
+                        "homeassistant", "restart", {"safe_mode": False}, blocking=False
+                    )
+                else:
+                    stop_handler = self.hass.data.get("homeassistant.stop_handler")
+                    if stop_handler:
+                        await stop_handler(self.hass, True)
             except Exception as err:
                 _LOGGER.warning("Error calling quick restart service: %s", err)
                 try:
-                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+                    await self.hass.services.async_call(
+                        "homeassistant", "restart", {"safe_mode": False}, blocking=False
+                    )
                 except Exception:
-                    pass
+                    stop_handler = self.hass.data.get("homeassistant.stop_handler")
+                    if stop_handler:
+                        await stop_handler(self.hass, True)
 
         elif action == ACTION_SYSTEM_RESTART:
             _LOGGER.info("Restart HA: Executing System Reboot...")
@@ -217,11 +260,15 @@ class RestartOrchestrator:
                 if self.hass.services.has_service("hassio", "host_reboot"):
                     await self.hass.services.async_call("hassio", "host_reboot", blocking=False)
                 elif self.hass.services.has_service("homeassistant", "restart"):
-                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+                    await self.hass.services.async_call(
+                        "homeassistant", "restart", {"safe_mode": False}, blocking=False
+                    )
             except Exception as err:
                 _LOGGER.warning("Error calling system reboot service: %s", err)
                 try:
-                    await self.hass.services.async_call("homeassistant", "restart", blocking=False)
+                    await self.hass.services.async_call(
+                        "homeassistant", "restart", {"safe_mode": False}, blocking=False
+                    )
                 except Exception:
                     pass
 
@@ -401,6 +448,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     entry_data["orchestrator"] = orchestrator
     entry_data["entry"] = entry
+
+    # Repair homeassistant.restart schema if corrupted
+    _repair_restart_service_schema(hass)
 
     # 1. Register static path for frontend
     frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
