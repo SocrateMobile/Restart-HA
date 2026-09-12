@@ -15,8 +15,13 @@ import voluptuous as vol
 
 from homeassistant.components import frontend, websocket_api
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, ServiceCall, callback
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.typing import ConfigType
+
+try:
+    from homeassistant.components.http import StaticPathConfig
+except ImportError:
+    StaticPathConfig = None  # type: ignore[misc,assignment]
 
 from .const import (
     ACTION_CANCEL,
@@ -37,6 +42,8 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+PLATFORMS: list[str] = ["update"]
 
 
 class RestartOrchestrator:
@@ -63,31 +70,38 @@ class RestartOrchestrator:
     def get_available_updates(self) -> list[dict[str, Any]]:
         """Get all update.* entities that have pending updates."""
         updates: list[dict[str, Any]] = []
-        for state in self.hass.states.async_all("update"):
-            attrs = state.attributes
-            is_avail = (
-                state.state == "on"
-                or attrs.get("update_available") is True
-                or (
-                    attrs.get("latest_version")
-                    and attrs.get("installed_version")
-                    and attrs.get("latest_version") != attrs.get("installed_version")
+        try:
+            for state in self.hass.states.async_all("update"):
+                attrs = state.attributes
+                is_avail = (
+                    state.state == "on"
+                    or attrs.get("update_available") is True
+                    or (
+                        attrs.get("latest_version")
+                        and attrs.get("installed_version")
+                        and attrs.get("latest_version") != attrs.get("installed_version")
+                    )
                 )
-            )
-            if is_avail:
-                updates.append(
-                    {
-                        "entity_id": state.entity_id,
-                        "name": attrs.get("friendly_name") or state.entity_id,
-                        "title": attrs.get("title") or attrs.get("friendly_name") or state.entity_id,
-                        "installed_version": attrs.get("installed_version") or "Inconnue",
-                        "latest_version": attrs.get("latest_version") or "Nouvelle version",
-                        "release_summary": attrs.get("release_summary"),
-                        "entity_picture": attrs.get("entity_picture"),
-                        "in_progress": attrs.get("in_progress", False),
-                        "update_percentage": attrs.get("update_percentage"),
-                    }
-                )
+                if is_avail:
+                    updates.append(
+                        {
+                            "entity_id": state.entity_id,
+                            "name": attrs.get("friendly_name") or state.entity_id,
+                            "title": (
+                                attrs.get("title")
+                                or attrs.get("friendly_name")
+                                or state.entity_id
+                            ),
+                            "installed_version": attrs.get("installed_version") or "Inconnue",
+                            "latest_version": attrs.get("latest_version") or "Nouvelle version",
+                            "release_summary": attrs.get("release_summary"),
+                            "entity_picture": attrs.get("entity_picture"),
+                            "in_progress": attrs.get("in_progress", False),
+                            "update_percentage": attrs.get("update_percentage"),
+                        }
+                    )
+        except Exception as err:
+            _LOGGER.debug("Error scanning update entities: %s", err)
         return updates
 
     def get_status_dict(self) -> dict[str, Any]:
@@ -109,7 +123,10 @@ class RestartOrchestrator:
 
     def broadcast_progress(self) -> None:
         """Broadcast status update to websocket subscribers."""
-        self.hass.bus.async_fire(WS_EVENT_PROGRESS, self.get_status_dict())
+        try:
+            self.hass.bus.async_fire(WS_EVENT_PROGRESS, self.get_status_dict())
+        except Exception:
+            pass
 
     def enable_restart_interception(self) -> None:
         """Intercept calls to homeassistant.restart to prevent premature reboot."""
@@ -119,45 +136,53 @@ class RestartOrchestrator:
         self.is_blocking_restarts = True
         self.restart_intercepted = False
 
-        if self.hass.services.has_service("homeassistant", "restart"):
-            service_desc = self.hass.services._services.get("homeassistant", {}).get("restart")
-            if service_desc and hasattr(service_desc, "job"):
-                self._original_restart_handler = service_desc.job
+        try:
+            if self.hass.services.has_service("homeassistant", "restart"):
+                services_dict = getattr(self.hass.services, "_services", {})
+                ha_services = services_dict.get("homeassistant", {})
+                service_desc = ha_services.get("restart")
+                if service_desc and hasattr(service_desc, "job"):
+                    self._original_restart_handler = service_desc.job
 
-                async def intercepted_restart(call: ServiceCall) -> None:
-                    if self.is_blocking_restarts:
-                        _LOGGER.warning(
-                            "Intercepted automatic restart from update component; "
-                            "delaying restart until all updates complete."
-                        )
-                        self.restart_intercepted = True
-                        self.status_message = (
-                            "Redémarrage automatique intercepté et mis en attente..."
-                        )
-                        self.broadcast_progress()
-                        return
+                    async def intercepted_restart(call: ServiceCall) -> None:
+                        if self.is_blocking_restarts:
+                            _LOGGER.warning(
+                                "Intercepted automatic restart from update component; "
+                                "delaying restart until all updates complete."
+                            )
+                            self.restart_intercepted = True
+                            self.status_message = (
+                                "Redémarrage automatique intercepté et mis en attente..."
+                            )
+                            self.broadcast_progress()
+                            return
 
-                    if self._original_restart_handler:
-                        target = self._original_restart_handler.target
-                        if asyncio.iscoroutinefunction(target):
-                            await target(call)
-                        else:
-                            await self.hass.async_add_executor_job(target, call)
+                        if self._original_restart_handler:
+                            target = self._original_restart_handler.target
+                            if asyncio.iscoroutinefunction(target):
+                                await target(call)
+                            else:
+                                await self.hass.async_add_executor_job(target, call)
 
-                self.hass.services.async_register(
-                    "homeassistant", "restart", intercepted_restart
-                )
-                _LOGGER.info("Restart HA: Interception of homeassistant.restart enabled.")
+                    self.hass.services.async_register(
+                        "homeassistant", "restart", intercepted_restart
+                    )
+                    _LOGGER.info("Restart HA: Interception of homeassistant.restart enabled.")
+        except Exception as err:
+            _LOGGER.warning("Restart HA: Could not intercept restart service: %s", err)
 
     def disable_restart_interception(self) -> None:
         """Restore original homeassistant.restart service handler."""
         self.is_blocking_restarts = False
-        if self._original_restart_handler and hasattr(self._original_restart_handler, "target"):
-            self.hass.services.async_register(
-                "homeassistant", "restart", self._original_restart_handler.target
-            )
-            _LOGGER.info("Restart HA: Original homeassistant.restart service restored.")
-            self._original_restart_handler = None
+        try:
+            if self._original_restart_handler and hasattr(self._original_restart_handler, "target"):
+                self.hass.services.async_register(
+                    "homeassistant", "restart", self._original_restart_handler.target
+                )
+                _LOGGER.info("Restart HA: Original homeassistant.restart service restored.")
+                self._original_restart_handler = None
+        except Exception as err:
+            _LOGGER.warning("Restart HA: Could not restore restart service: %s", err)
 
     async def execute_restart_action(self, action: str) -> None:
         """Execute the final restart or action."""
@@ -208,7 +233,6 @@ class RestartOrchestrator:
         """Sequential execution of updates with restart interception."""
         self.enable_restart_interception()
         try:
-            # Get list of targets
             if entity_ids:
                 targets = entity_ids
             else:
@@ -236,13 +260,6 @@ class RestartOrchestrator:
                     )
                     self.broadcast_progress()
 
-                    _LOGGER.info(
-                        "Restart HA: Starting update for %s (%s)",
-                        eid,
-                        self.current_entity_name,
-                    )
-
-                    # Trigger update.install
                     try:
                         await self.hass.services.async_call(
                             "update",
@@ -255,9 +272,7 @@ class RestartOrchestrator:
                         self.errors.append(f"{eid}: {err}")
                         continue
 
-                    # Wait for completion of this entity (max 300 seconds)
                     wait_seconds = 0
-                    entity_completed = False
                     while wait_seconds < 300:
                         await asyncio.sleep(1.5)
                         wait_seconds += 2
@@ -276,9 +291,11 @@ class RestartOrchestrator:
                         state_val = cur_st.state
 
                         if not in_progress:
-                            # If it finished or state is off or versions match
-                            if state_val == "off" or (inst_v and lat_v and inst_v == lat_v) or wait_seconds >= 6:
-                                entity_completed = True
+                            if (
+                                state_val == "off"
+                                or (inst_v and lat_v and inst_v == lat_v)
+                                or wait_seconds >= 6
+                            ):
                                 break
 
                     self.current_entity_progress = 100
@@ -301,7 +318,6 @@ class RestartOrchestrator:
             self.disable_restart_interception()
             self.is_running = False
 
-            # Perform final action
             if action == ACTION_CANCEL:
                 _LOGGER.info("Restart HA: Updates finished, action is Cancel: returning without restart.")
                 self.status_message = "Mises à jour terminées. Redémarrage annulé."
@@ -328,53 +344,121 @@ class RestartOrchestrator:
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Restart HA component from configuration.yaml."""
-    return await _async_setup_common(hass)
+    """Set up Restart HA from configuration.yaml (optional)."""
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Restart HA from a config entry."""
-    return await _async_setup_common(hass)
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    entry_data = domain_data.setdefault(entry.entry_id, {})
+
+    orchestrator = domain_data.get("orchestrator")
+    if not orchestrator:
+        orchestrator = RestartOrchestrator(hass)
+        domain_data["orchestrator"] = orchestrator
+
+    entry_data["orchestrator"] = orchestrator
+    entry_data["entry"] = entry
+
+    # 1. Register static path for frontend
+    frontend_dir = os.path.join(os.path.dirname(__file__), "frontend")
+    if os.path.exists(frontend_dir):
+        if hasattr(hass.http, "async_register_static_paths") and StaticPathConfig is not None:
+            await hass.http.async_register_static_paths(
+                [StaticPathConfig(FRONTEND_URL_PATH, frontend_dir, cache_headers=False)]
+            )
+        elif hasattr(hass.http, "register_static_path"):
+            try:
+                hass.http.register_static_path(
+                    FRONTEND_URL_PATH,
+                    frontend_dir,
+                    cache_headers=False,
+                )
+            except Exception:
+                pass
+
+    # 2. Register left sidebar custom panel
+    try:
+        frontend.async_register_built_in_panel(
+            hass,
+            component_name="custom",
+            sidebar_title=PANEL_TITLE,
+            sidebar_icon=PANEL_ICON,
+            frontend_url_path=PANEL_URL_PATH,
+            config={
+                "_panel_custom": {
+                    "name": "restart-ha-panel",
+                    "module_url": f"{FRONTEND_URL_PATH}/{FRONTEND_FILE_NAME}?v={VERSION}",
+                }
+            },
+            require_admin=False,
+            update=True,
+        )
+    except TypeError:
+        try:
+            frontend.async_register_built_in_panel(
+                hass,
+                component_name="custom",
+                sidebar_title=PANEL_TITLE,
+                sidebar_icon=PANEL_ICON,
+                frontend_url_path=PANEL_URL_PATH,
+                config={
+                    "_panel_custom": {
+                        "name": "restart-ha-panel",
+                        "module_url": f"{FRONTEND_URL_PATH}/{FRONTEND_FILE_NAME}?v={VERSION}",
+                    }
+                },
+                require_admin=False,
+            )
+        except Exception as err:
+            _LOGGER.debug("Could not register sidebar panel: %s", err)
+    except Exception as err:
+        _LOGGER.debug("Could not register sidebar panel: %s", err)
+
+    # 3. Register WebSocket Commands (idempotent)
+    if not domain_data.get("_ws_registered"):
+        domain_data["_ws_registered"] = True
+        _register_websocket_commands(hass, orchestrator)
+
+    # 4. Register Services (idempotent)
+    if not domain_data.get("_services_registered"):
+        domain_data["_services_registered"] = True
+        _register_services(hass, orchestrator)
+
+    # 5. Forward setup to platforms (update platform)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    _LOGGER.info("Restart HA integration successfully set up (v%s)", VERSION)
+    return True
 
 
-async def _async_setup_common(hass: HomeAssistant) -> bool:
-    """Common setup logic for Restart HA."""
-    if DOMAIN in hass.data:
-        return True
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Unload a config entry."""
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unload_ok:
+        hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+    return unload_ok
 
-    orchestrator = RestartOrchestrator(hass)
-    hass.data[DOMAIN] = {"orchestrator": orchestrator}
 
-    # Register frontend static path
-    frontend_path = os.path.join(os.path.dirname(__file__), "frontend")
-    hass.http.register_static_path(
-        FRONTEND_URL_PATH,
-        frontend_path,
-        cache_headers=False,
-    )
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload config entry."""
+    await async_unload_entry(hass, entry)
+    await async_setup_entry(hass, entry)
 
-    # Register left sidebar built-in custom panel
-    frontend.async_register_built_in_panel(
-        hass,
-        component_name="custom",
-        sidebar_title=PANEL_TITLE,
-        sidebar_icon=PANEL_ICON,
-        frontend_url_path=PANEL_URL_PATH,
-        config={
-            "_panel_custom": {
-                "name": "restart-ha-panel",
-                "module_url": f"{FRONTEND_URL_PATH}/{FRONTEND_FILE_NAME}?v={VERSION}",
-            }
-        },
-        require_admin=False,
-        update=True,
-    )
 
-    # Register WebSocket Commands
+def _register_websocket_commands(
+    hass: HomeAssistant, orchestrator: RestartOrchestrator
+) -> None:
+    """Register WebSocket API commands."""
+
     @websocket_api.websocket_command({vol.Required("type"): WS_TYPE_GET_STATUS})
-    @callback
-    def ws_get_status(
-        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    @websocket_api.async_response
+    async def ws_get_status(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
     ) -> None:
         connection.send_result(msg["id"], orchestrator.get_status_dict())
 
@@ -388,8 +472,11 @@ async def _async_setup_common(hass: HomeAssistant) -> bool:
             vol.Optional("entity_ids"): [str],
         }
     )
-    def ws_start_process(
-        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    @websocket_api.async_response
+    async def ws_start_process(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
     ) -> None:
         try:
             orchestrator.start_process(
@@ -402,8 +489,11 @@ async def _async_setup_common(hass: HomeAssistant) -> bool:
             connection.send_error(msg["id"], "start_failed", str(err))
 
     @websocket_api.websocket_command({vol.Required("type"): WS_TYPE_ABORT_PROCESS})
-    def ws_abort_process(
-        hass: HomeAssistant, connection: websocket_api.ActiveConnection, msg: dict[str, Any]
+    @websocket_api.async_response
+    async def ws_abort_process(
+        hass: HomeAssistant,
+        connection: websocket_api.ActiveConnection,
+        msg: dict[str, Any],
     ) -> None:
         orchestrator.abort_process()
         connection.send_result(msg["id"], {"status": "aborted"})
@@ -412,7 +502,10 @@ async def _async_setup_common(hass: HomeAssistant) -> bool:
     websocket_api.async_register_command(hass, ws_start_process)
     websocket_api.async_register_command(hass, ws_abort_process)
 
-    # Register HA Services
+
+def _register_services(hass: HomeAssistant, orchestrator: RestartOrchestrator) -> None:
+    """Register Home Assistant services."""
+
     async def handle_quick_restart(call: ServiceCall) -> None:
         update_all = call.data.get("update_all", False)
         orchestrator.start_process(ACTION_QUICK_RESTART, update_all=update_all)
@@ -428,6 +521,3 @@ async def _async_setup_common(hass: HomeAssistant) -> bool:
     hass.services.async_register(DOMAIN, "quick_restart", handle_quick_restart)
     hass.services.async_register(DOMAIN, "system_restart", handle_system_restart)
     hass.services.async_register(DOMAIN, "update_all", handle_update_all)
-
-    _LOGGER.info("Restart HA integration successfully initialized (v%s)", VERSION)
-    return True

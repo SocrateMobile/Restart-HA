@@ -6,6 +6,6 @@
   "documentation": "https://github.com/SocrateMobile/Restart-HA",
   "issue_tracker": "https://github.com/SocrateMobile/Restart-HA/issues",
   "iot_class": "calculated",
-  "dependencies": ["frontend", "websocket_api"],
-  "version": "1.0.0"
+  "dependencies": ["frontend", "http", "websocket_api"],
+  "version": "1.0.1"
 }
