@@ -3,7 +3,7 @@ from __future__ import annotations
 
 DOMAIN = "restart_ha"
 NAME = "Restart HA"
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 PANEL_URL_PATH = "restart_ha"
 PANEL_TITLE = "Restart HA"

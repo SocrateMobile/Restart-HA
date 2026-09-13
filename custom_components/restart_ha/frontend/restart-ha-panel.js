@@ -501,10 +501,12 @@ class RestartHAPanel extends HTMLElement {
   _toggleDayPicker() {
     if (this._el.dayPickerPopover.style.display === "block") {
       this._el.dayPickerPopover.style.display = "none";
+      if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
     } else {
       this._el.timePickerPopover.style.display = "none";
       this._renderDayOptions();
       this._el.dayPickerPopover.style.display = "block";
+      if (this._el.schedBox) this._el.schedBox.classList.add("popover-open");
     }
   }
 
@@ -522,6 +524,7 @@ class RestartHAPanel extends HTMLElement {
       this._selectedDay = null;
       this._el.dayPickerValue.textContent = this.t("no_day");
       this._el.dayPickerPopover.style.display = "none";
+      if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
     };
     list.appendChild(noDayItem);
 
@@ -534,6 +537,7 @@ class RestartHAPanel extends HTMLElement {
         this._selectedDay = idx;
         this._el.dayPickerValue.textContent = dName;
         this._el.dayPickerPopover.style.display = "none";
+        if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
       };
       list.appendChild(item);
     });
@@ -542,10 +546,12 @@ class RestartHAPanel extends HTMLElement {
   _toggleTimePicker() {
     if (this._el.timePickerPopover.style.display === "block") {
       this._el.timePickerPopover.style.display = "none";
+      if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
     } else {
       this._el.dayPickerPopover.style.display = "none";
       this._showHourStep();
       this._el.timePickerPopover.style.display = "block";
+      if (this._el.schedBox) this._el.schedBox.classList.add("popover-open");
     }
   }
 
@@ -590,6 +596,7 @@ class RestartHAPanel extends HTMLElement {
         this._selectedMinute = mStr;
         this._el.timePickerValue.textContent = `${this._selectedHour}:${this._selectedMinute}`;
         this._el.timePickerPopover.style.display = "none";
+        if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
       };
       grid.appendChild(btn);
     });
@@ -1303,6 +1310,8 @@ class RestartHAPanel extends HTMLElement {
           display: flex;
           flex-direction: column;
           gap: 12px;
+          position: relative;
+          z-index: 1;
         }
 
         .btn {
@@ -1404,7 +1413,12 @@ class RestartHAPanel extends HTMLElement {
           border: 1px solid rgba(255, 255, 255, 0.1);
           border-radius: 14px;
           position: relative;
+          z-index: 50;
           backdrop-filter: blur(10px);
+        }
+
+        .schedule-box.popover-open {
+          z-index: 1000 !important;
         }
 
         .schedule-header {
@@ -1558,14 +1572,14 @@ class RestartHAPanel extends HTMLElement {
           top: 100%;
           left: 12px;
           margin-top: 8px;
-          z-index: 9999;
-          background: #1e293b;
-          border: 1px solid rgba(56, 189, 248, 0.4);
-          border-radius: 12px;
+          z-index: 99999 !important;
+          background: #0f172a !important;
+          border: 1px solid rgba(56, 189, 248, 0.5);
+          border-radius: 14px;
           padding: 14px;
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
-          min-width: 270px;
-          backdrop-filter: blur(12px);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(56, 189, 248, 0.25);
+          min-width: 280px;
+          pointer-events: auto;
         }
 
         .popover-header {
@@ -2016,10 +2030,12 @@ class RestartHAPanel extends HTMLElement {
     this._el.closeDayPicker.onclick = (e) => {
       e.stopPropagation();
       this._el.dayPickerPopover.style.display = "none";
+      if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
     };
     this._el.closeTimePicker.onclick = (e) => {
       e.stopPropagation();
       this._el.timePickerPopover.style.display = "none";
+      if (this._el.schedBox) this._el.schedBox.classList.remove("popover-open");
     };
     this._el.scheduleRecurringCb.onchange = (e) => {
       this._recurring = e.target.checked;
@@ -2029,11 +2045,17 @@ class RestartHAPanel extends HTMLElement {
 
     // Close popovers on click outside
     this.shadowRoot.addEventListener("click", (e) => {
-      if (this._el.dayPickerPopover && !this._el.dayPickerPopover.contains(e.target) && e.target !== this._el.dayPickerBtn) {
+      let changed = false;
+      if (this._el.dayPickerPopover && this._el.dayPickerPopover.style.display === "block" && !this._el.dayPickerPopover.contains(e.target) && e.target !== this._el.dayPickerBtn) {
         this._el.dayPickerPopover.style.display = "none";
+        changed = true;
       }
-      if (this._el.timePickerPopover && !this._el.timePickerPopover.contains(e.target) && e.target !== this._el.timePickerBtn) {
+      if (this._el.timePickerPopover && this._el.timePickerPopover.style.display === "block" && !this._el.timePickerPopover.contains(e.target) && e.target !== this._el.timePickerBtn) {
         this._el.timePickerPopover.style.display = "none";
+        changed = true;
+      }
+      if (changed && this._el.schedBox) {
+        this._el.schedBox.classList.remove("popover-open");
       }
     });
 
