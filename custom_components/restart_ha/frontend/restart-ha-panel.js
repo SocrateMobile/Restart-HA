@@ -1071,23 +1071,46 @@ class RestartHAPanel extends HTMLElement {
         }
 
         .body {
-          padding: 24px 28px;
+          padding: 20px 24px;
           overflow-y: auto;
+          min-height: 0;
           display: flex;
           flex-direction: column;
-          gap: 18px;
+          gap: 14px;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.03);
+        }
+
+        .body::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .body::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.03);
+          border-radius: 4px;
+          margin: 6px 0;
+        }
+
+        .body::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 4px;
+        }
+
+        .body::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.35);
         }
 
         .option-card {
           background: rgba(255, 255, 255, 0.03);
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
-          padding: 16px;
+          padding: 14px 16px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           cursor: pointer;
           transition: background 0.2s, border-color 0.2s;
+          flex-shrink: 0;
         }
 
         .option-card:hover {
@@ -1138,13 +1161,14 @@ class RestartHAPanel extends HTMLElement {
         .updates-container {
           border: 1px solid rgba(255, 255, 255, 0.08);
           border-radius: 14px;
-          background: rgba(0, 0, 0, 0.2);
+          background: rgba(0, 0, 0, 0.22);
           overflow: hidden;
           display: none;
+          flex-shrink: 0;
         }
 
         .updates-header {
-          padding: 12px 16px;
+          padding: 10px 16px;
           background: rgba(255, 255, 255, 0.04);
           font-size: 13px;
           font-weight: 600;
@@ -1153,6 +1177,7 @@ class RestartHAPanel extends HTMLElement {
           display: flex;
           align-items: center;
           justify-content: space-between;
+          flex-shrink: 0;
         }
 
         .select-toggle-btn {
@@ -1171,25 +1196,50 @@ class RestartHAPanel extends HTMLElement {
         }
 
         .updates-list {
-          max-height: 190px;
+          max-height: 240px;
           overflow-y: auto;
           padding: 4px 0;
+          overscroll-behavior: contain;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(56, 189, 248, 0.5) rgba(255, 255, 255, 0.05);
+        }
+
+        /* Visible scrollbar ("ascenseur") */
+        .updates-list::-webkit-scrollbar {
+          width: 7px;
+        }
+
+        .updates-list::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.04);
+          border-radius: 4px;
+          margin: 4px 2px;
+        }
+
+        .updates-list::-webkit-scrollbar-thumb {
+          background: rgba(56, 189, 248, 0.45);
+          border-radius: 4px;
+          box-shadow: 0 0 6px rgba(56, 189, 248, 0.25);
+        }
+
+        .updates-list::-webkit-scrollbar-thumb:hover {
+          background: rgba(56, 189, 248, 0.8);
         }
 
         .update-item {
-          padding: 10px 16px;
+          padding: 9px 16px;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
           font-size: 13px;
           cursor: pointer;
           user-select: none;
           transition: background 0.15s ease;
+          flex-shrink: 0;
         }
 
         .update-item:hover {
-          background: rgba(255, 255, 255, 0.04);
+          background: rgba(255, 255, 255, 0.05);
         }
 
         .update-item:last-child {
@@ -1309,15 +1359,16 @@ class RestartHAPanel extends HTMLElement {
         .actions-grid {
           display: flex;
           flex-direction: column;
-          gap: 12px;
+          gap: 10px;
           position: relative;
           z-index: 1;
+          flex-shrink: 0;
         }
 
         .btn {
           border: none;
           border-radius: 14px;
-          padding: 14px 20px;
+          padding: 12px 18px;
           font-size: 15px;
           font-weight: 600;
           cursor: pointer;
@@ -1407,7 +1458,6 @@ class RestartHAPanel extends HTMLElement {
 
         /* Schedule Box Styles */
         .schedule-box {
-          margin-bottom: 18px;
           padding: 14px 16px;
           background: rgba(15, 23, 42, 0.7);
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1415,6 +1465,7 @@ class RestartHAPanel extends HTMLElement {
           position: relative;
           z-index: 50;
           backdrop-filter: blur(10px);
+          flex-shrink: 0;
         }
 
         .schedule-box.popover-open {
@@ -2201,13 +2252,6 @@ class RestartHAPanel extends HTMLElement {
         cb.addEventListener("change", (e) => {
           e.stopPropagation();
           this._toggleItemSelection(u.entity_id, cb.checked);
-        });
-
-        itemRow.addEventListener("click", (e) => {
-          if (e.target !== cb && !isRunning) {
-            cb.checked = !cb.checked;
-            this._toggleItemSelection(u.entity_id, cb.checked);
-          }
         });
 
         listEl.appendChild(itemRow);
