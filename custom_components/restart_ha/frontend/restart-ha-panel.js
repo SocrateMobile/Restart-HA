@@ -1373,6 +1373,22 @@ function launchSocrateRulesEasterEgg(targetRoot) {
         font-weight: 600;
         text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
       }
+      #socrate-rules-overlay p.socrate-exit-hint {
+        font-size: 0.95rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-top: 16px;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 300;
+        opacity: 0;
+        animation: socrate-fadeIn 2s ease forwards 1.1s;
+        cursor: pointer;
+      }
+      #socrate-rules-overlay p.socrate-exit-hint strong {
+        color: #ff007f;
+        font-weight: 700;
+        text-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
+      }
       #socrate-rules-overlay .socrate-instructions {
         position: absolute;
         bottom: 40px;
@@ -1408,14 +1424,19 @@ function launchSocrateRulesEasterEgg(targetRoot) {
           font-size: 0.85rem;
           letter-spacing: 2px;
         }
+        #socrate-rules-overlay p.socrate-exit-hint {
+          font-size: 0.75rem;
+          letter-spacing: 1px;
+        }
       }
     </style>
     <canvas id="socrateParticleCanvas"></canvas>
     <div class="socrate-container">
       <h1 class="socrate-title" id="socrateTitle">Socrate Rules</h1>
       <p class="socrate-sub">Une expérience visuelle <strong>hautement philosophique</strong>.</p>
+      <p class="socrate-exit-hint" id="socrateExitHint">Cliquez 3 fois sur <strong>SOCRATE RULES</strong> pour quitter</p>
     </div>
-    <div class="socrate-instructions">Cliquez 3 fois sur "SOCRATE RULES" pour quitter</div>
+    <div class="socrate-instructions">Bougez votre souris & cliquez n'importe où</div>
   `;
 
   targetRoot.appendChild(overlay);
@@ -1689,6 +1710,23 @@ function launchSocrateRulesEasterEgg(targetRoot) {
     },
     { passive: true }
   );
+
+  const exitHint = overlay.querySelector("#socrateExitHint");
+  if (exitHint) {
+    exitHint.addEventListener("click", (e) => {
+      e.stopPropagation();
+      handleExitClick(e.clientX, e.clientY);
+    });
+    exitHint.addEventListener(
+      "touchstart",
+      (e) => {
+        e.stopPropagation();
+        const touch = e.touches && e.touches[0];
+        handleExitClick(touch ? touch.clientX : null, touch ? touch.clientY : null);
+      },
+      { passive: true }
+    );
+  }
 
   function cleanup() {
     if (animId) {
