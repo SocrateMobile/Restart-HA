@@ -3,11 +3,47 @@
     "step": {
       "user": {
         "title": "Restart HA",
-        "description": "Do you want to install the Restart HA panel?"
+        "description": "Do you want to set up the Restart HA panel?"
       }
     },
     "abort": {
       "single_instance_allowed": "Only a single instance of Restart HA is allowed."
+    }
+  },
+  "services": {
+    "quick_restart": {
+      "name": "Quick Restart",
+      "description": "Restart Home Assistant immediately, with optional pre-update.",
+      "fields": {
+        "update_all": {
+          "name": "Update all",
+          "description": "Apply all pending updates before restarting."
+        }
+      }
+    },
+    "system_restart": {
+      "name": "System Reboot",
+      "description": "Reboot the full host (Home Assistant OS / Machine), with optional pre-update.",
+      "fields": {
+        "update_all": {
+          "name": "Update all",
+          "description": "Apply all pending updates before restarting."
+        }
+      }
+    },
+    "update_all": {
+      "name": "Update all",
+      "description": "Perform all available updates while intercepting intermediate reboots.",
+      "fields": {
+        "action": {
+          "name": "Final action",
+          "description": "Action to perform after updates complete."
+        }
+      }
+    },
+    "cancel_schedule": {
+      "name": "Cancel schedule",
+      "description": "Cancel any active scheduled restart or update."
     }
   }
 }

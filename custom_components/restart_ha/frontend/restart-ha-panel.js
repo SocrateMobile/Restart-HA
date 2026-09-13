@@ -10,6 +10,301 @@
  *  - Sidebar "MAJ" gradient badge with persistent MutationObserver
  */
 
+
+/* =========================================================================
+ * 🌐 INTERNATIONALIZATION (FR, EN, DE, IT, ES, UK)
+ * ========================================================================= */
+const TRANSLATIONS = {
+  fr: {
+    panel_title: "Restart HA",
+    panel_subtitle: "Options de redémarrage & gestion des mises à jour",
+    update_all_title: "Mettre tout à jour",
+    update_all_desc: "Applique les mises à jour sélectionnées avant l'action (bloque les redémarrages auto)",
+    selected_count: "{count} sélectionné{s}",
+    available_updates: "Mises à jour disponibles",
+    toggle_all: "Tout basculer",
+    quick_restart: "Redémarrage Rapide",
+    quick_restart_desc: "Redémarre Home Assistant immédiatement (sans validation)",
+    system_restart: "Redémarrage Système",
+    system_restart_desc: "Redémarre l'hôte complet (Home Assistant + OS)",
+    safe_boot: "Mode Sans Échec",
+    safe_boot_desc: "Redémarre sans les composants personnalisés",
+    cancel: "Annuler",
+    cancel_desc: "Ferme la fenêtre et retourne à l'accueil",
+    cancel_desc_updates: "Applique les mises à jour sans redémarrer",
+    scheduled_title: "Redémarrage Planifié",
+    scheduled_desc: "Exécution différée ou récurrente",
+    with_updates: "Avec M.A.J",
+    reboot_only: "Reboot seul",
+    day_label: "Jour :",
+    time_label: "Heure :",
+    no_day: "Prochaine heure",
+    recurring: "Récurrent",
+    schedule_btn: "Planifier",
+    cancel_sched_btn: "Annuler",
+    choose_day: "Choisir le jour",
+    choose_time_hour: "Choisir l'heure (1/2)",
+    choose_time_min: "Choisir les minutes (2/2)",
+    select_hour: "Sélectionnez l'heure :",
+    select_min: "Sélectionnez les minutes :",
+    days: ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
+    active_sched_prefix: "Planifié pour",
+    active_sched_recurring: "Récurrent",
+    active_sched_once: "Une seule fois",
+    active_sched_updates: "Mises à jour incluses",
+    active_sched_no_updates: "Redémarrage seul",
+    intercept_alert: "⚠️ Redémarrage automatique intercepté avec succès : en attente de la fin des autres MAJ.",
+    processing: "Traitement en cours...",
+    global_progress: "Progression globale",
+    item_progress: "Élément en cours",
+    easter_egg_hint: "Cliquez 3 fois sur SOCRATE RULES pour quitter",
+    easter_egg_sub: "Une expérience visuelle <strong>hautement philosophique</strong>.",
+    easter_egg_instructions: "Bougez votre souris & cliquez n'importe où",
+    sched_success: "Planification enregistrée avec succès !",
+    sched_cancelled: "Planification annulée."
+  },
+  en: {
+    panel_title: "Restart HA",
+    panel_subtitle: "Restart options & updates management",
+    update_all_title: "Update all",
+    update_all_desc: "Apply selected updates before action (intercepts automatic reboots)",
+    selected_count: "{count} selected",
+    available_updates: "Available updates",
+    toggle_all: "Toggle all",
+    quick_restart: "Quick Restart",
+    quick_restart_desc: "Restart Home Assistant immediately (without validation)",
+    system_restart: "System Reboot",
+    system_restart_desc: "Reboot full host (Home Assistant + OS)",
+    safe_boot: "Safe Mode",
+    safe_boot_desc: "Restart without custom components",
+    cancel: "Cancel",
+    cancel_desc: "Close window and return to dashboard",
+    cancel_desc_updates: "Apply updates without rebooting",
+    scheduled_title: "Scheduled Restart",
+    scheduled_desc: "Delayed or recurring execution",
+    with_updates: "With updates",
+    reboot_only: "Reboot only",
+    day_label: "Day:",
+    time_label: "Time:",
+    no_day: "Next occurrence",
+    recurring: "Recurring",
+    schedule_btn: "Schedule",
+    cancel_sched_btn: "Cancel",
+    choose_day: "Choose day",
+    choose_time_hour: "Choose hour (1/2)",
+    choose_time_min: "Choose minutes (2/2)",
+    select_hour: "Select hour:",
+    select_min: "Select minutes:",
+    days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    active_sched_prefix: "Scheduled for",
+    active_sched_recurring: "Recurring",
+    active_sched_once: "One time",
+    active_sched_updates: "Updates included",
+    active_sched_no_updates: "Restart only",
+    intercept_alert: "⚠️ Automatic restart successfully intercepted: waiting for other updates.",
+    processing: "Processing...",
+    global_progress: "Global progress",
+    item_progress: "Current item",
+    easter_egg_hint: "Click 3 times on SOCRATE RULES to exit",
+    easter_egg_sub: "A <strong>highly philosophical</strong> visual experience.",
+    easter_egg_instructions: "Move your mouse & click anywhere",
+    sched_success: "Schedule successfully registered!",
+    sched_cancelled: "Schedule cancelled."
+  },
+  de: {
+    panel_title: "Restart HA",
+    panel_subtitle: "Neustart-Optionen & Update-Verwaltung",
+    update_all_title: "Alles aktualisieren",
+    update_all_desc: "Ausgewählte Updates vor der Aktion anwenden (blockiert automatische Neustarts)",
+    selected_count: "{count} ausgewählt",
+    available_updates: "Verfügbare Updates",
+    toggle_all: "Alle umschalten",
+    quick_restart: "Schneller Neustart",
+    quick_restart_desc: "Home Assistant sofort neustarten (ohne Prüfung)",
+    system_restart: "System-Neustart",
+    system_restart_desc: "Gesamten Host neustarten (Home Assistant + Betriebssystem)",
+    safe_boot: "Abgesicherter Modus",
+    safe_boot_desc: "Ohne benutzerdefinierte Komponenten neustarten",
+    cancel: "Abbrechen",
+    cancel_desc: "Fenster schließen und zum Dashboard zurückkehren",
+    cancel_desc_updates: "Updates ohne Neustart anwenden",
+    scheduled_title: "Geplanter Neustart",
+    scheduled_desc: "Verzögerte oder wiederkehrende Ausführung",
+    with_updates: "Mit Updates",
+    reboot_only: "Nur Neustart",
+    day_label: "Tag:",
+    time_label: "Uhrzeit:",
+    no_day: "Nächste Uhrzeit",
+    recurring: "Wiederkehrend",
+    schedule_btn: "Planen",
+    cancel_sched_btn: "Abbrechen",
+    choose_day: "Tag auswählen",
+    choose_time_hour: "Stunde wählen (1/2)",
+    choose_time_min: "Minuten wählen (2/2)",
+    select_hour: "Stunde auswählen:",
+    select_min: "Minuten auswählen:",
+    days: ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"],
+    active_sched_prefix: "Geplant für",
+    active_sched_recurring: "Wiederkehrend",
+    active_sched_once: "Einmalig",
+    active_sched_updates: "Inklusive Updates",
+    active_sched_no_updates: "Nur Neustart",
+    intercept_alert: "⚠️ Automatischer Neustart erfolgreich abgefangen: Warten auf verbleibende Updates.",
+    processing: "Verarbeitung läuft...",
+    global_progress: "Gesamtfortschritt",
+    item_progress: "Aktuelles Element",
+    easter_egg_hint: "Klicken Sie dreimal auf SOCRATE RULES zum Beenden",
+    easter_egg_sub: "Eine <strong>höchst philosophische</strong> visuelle Erfahrung.",
+    easter_egg_instructions: "Maus bewegen & überall klicken",
+    sched_success: "Zeitplan erfolgreich gespeichert!",
+    sched_cancelled: "Zeitplan abgebrochen."
+  },
+  it: {
+    panel_title: "Restart HA",
+    panel_subtitle: "Opzioni di riavvio e gestione aggiornamenti",
+    update_all_title: "Aggiorna tutto",
+    update_all_desc: "Applica gli aggiornamenti selezionati prima dell'azione (intercetta i riavvii automatici)",
+    selected_count: "{count} selezionati",
+    available_updates: "Aggiornamenti disponibili",
+    toggle_all: "Inverti selezione",
+    quick_restart: "Riavvio Rapido",
+    quick_restart_desc: "Riavvia Home Assistant immediatamente (senza conferma)",
+    system_restart: "Riavvio di Sistema",
+    system_restart_desc: "Riavvia l'intero host (Home Assistant + SO)",
+    safe_boot: "Modalità Provvisoria",
+    safe_boot_desc: "Riavvia senza componenti personalizzati",
+    cancel: "Annulla",
+    cancel_desc: "Chiudi la finestra e torna alla schermata principale",
+    cancel_desc_updates: "Applica gli aggiornamenti senza riavviare",
+    scheduled_title: "Riavvio Programmato",
+    scheduled_desc: "Esecuzione posticipata o ricorrente",
+    with_updates: "Con aggiornamenti",
+    reboot_only: "Solo riavvio",
+    day_label: "Giorno:",
+    time_label: "Ora:",
+    no_day: "Prossima ora",
+    recurring: "Ricorrente",
+    schedule_btn: "Pianifica",
+    cancel_sched_btn: "Annulla",
+    choose_day: "Scegli il giorno",
+    choose_time_hour: "Scegli l'ora (1/2)",
+    choose_time_min: "Scegli i minuti (2/2)",
+    select_hour: "Seleziona l'ora:",
+    select_min: "Seleziona i minuti:",
+    days: ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"],
+    active_sched_prefix: "Programmato per",
+    active_sched_recurring: "Ricorrente",
+    active_sched_once: "Una sola volta",
+    active_sched_updates: "Aggiornamenti inclusi",
+    active_sched_no_updates: "Solo riavvio",
+    intercept_alert: "⚠️ Riavvio automatico intercettato con successo: in attesa degli altri aggiornamenti.",
+    processing: "Elaborazione in corso...",
+    global_progress: "Avanzamento globale",
+    item_progress: "Elemento corrente",
+    easter_egg_hint: "Fai triplo clic su SOCRATE RULES per uscire",
+    easter_egg_sub: "Un'esperienza visiva <strong>altamente filosofica</strong>.",
+    easter_egg_instructions: "Muovi il mouse e fai clic ovunque",
+    sched_success: "Pianificazione salvata con successo!",
+    sched_cancelled: "Pianificazione annullata."
+  },
+  es: {
+    panel_title: "Restart HA",
+    panel_subtitle: "Opciones de reinicio y gestión de actualizaciones",
+    update_all_title: "Actualizar todo",
+    update_all_desc: "Aplica las actualizaciones seleccionadas antes de la acción (intercepta reinicios automáticos)",
+    selected_count: "{count} seleccionado{s}",
+    available_updates: "Actualizaciones disponibles",
+    toggle_all: "Alternar todo",
+    quick_restart: "Reinicio Rápido",
+    quick_restart_desc: "Reinicia Home Assistant inmediatamente (sin confirmación)",
+    system_restart: "Reinicio del Sistema",
+    system_restart_desc: "Reinicia el host completo (Home Assistant + SO)",
+    safe_boot: "Modo Seguro",
+    safe_boot_desc: "Reinicia sin componentes personalizados",
+    cancel: "Cancelar",
+    cancel_desc: "Cierra la ventana y vuelve al panel de control",
+    cancel_desc_updates: "Aplica las actualizaciones sin reiniciar",
+    scheduled_title: "Reinicio Programado",
+    scheduled_desc: "Ejecución diferida o periódica",
+    with_updates: "Con actualizaciones",
+    reboot_only: "Solo reinicio",
+    day_label: "Día:",
+    time_label: "Hora:",
+    no_day: "Próxima hora",
+    recurring: "Periódico",
+    schedule_btn: "Programar",
+    cancel_sched_btn: "Cancelar",
+    choose_day: "Elegir día",
+    choose_time_hour: "Elegir hora (1/2)",
+    choose_time_min: "Elegir minutos (2/2)",
+    select_hour: "Selecciona la hora:",
+    select_min: "Selecciona los minutos:",
+    days: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
+    active_sched_prefix: "Programado para",
+    active_sched_recurring: "Periódico",
+    active_sched_once: "Una sola vez",
+    active_sched_updates: "Actualizaciones incluidas",
+    active_sched_no_updates: "Solo reinicio",
+    intercept_alert: "⚠️ Reinicio automático interceptado con éxito: esperando el fin de las otras actualizaciones.",
+    processing: "Procesando...",
+    global_progress: "Progreso global",
+    item_progress: "Elemento actual",
+    easter_egg_hint: "Haz triple clic en SOCRATE RULES para salir",
+    easter_egg_sub: "Una experiencia visual <strong>altamente filosófica</strong>.",
+    easter_egg_instructions: "Mueve el ratón y haz clic en cualquier lugar",
+    sched_success: "¡Programación guardada con éxito!",
+    sched_cancelled: "Programación cancelada."
+  },
+  uk: {
+    panel_title: "Restart HA",
+    panel_subtitle: "Опції перезапуску та керування оновленнями",
+    update_all_title: "Оновити все",
+    update_all_desc: "Встановити вибрані оновлення перед дією (блокує автоперезапуски)",
+    selected_count: "{count} вибрано",
+    available_updates: "Доступні оновлення",
+    toggle_all: "Перемкнути все",
+    quick_restart: "Швидкий перезапуск",
+    quick_restart_desc: "Перезапуск Home Assistant негайно (без підтвердження)",
+    system_restart: "Перезапуск системи",
+    system_restart_desc: "Перезапуск усього хоста (Home Assistant + ОС)",
+    safe_boot: "Безпечний режим",
+    safe_boot_desc: "Перезапуск без сторонніх інтеграцій",
+    cancel: "Скасувати",
+    cancel_desc: "Закрити вікно та повернутися на головну",
+    cancel_desc_updates: "Застосувати оновлення без перезапуску",
+    scheduled_title: "Запланований перезапуск",
+    scheduled_desc: "Відкладене або повторюване виконання",
+    with_updates: "З оновленнями",
+    reboot_only: "Лише перезапуск",
+    day_label: "День:",
+    time_label: "Час:",
+    no_day: "Найближчий час",
+    recurring: "Повторювати",
+    schedule_btn: "Запланувати",
+    cancel_sched_btn: "Скасувати",
+    choose_day: "Оберіть день",
+    choose_time_hour: "Оберіть годину (1/2)",
+    choose_time_min: "Оберіть хвилини (2/2)",
+    select_hour: "Виберіть годину:",
+    select_min: "Виберіть хвилини:",
+    days: ["Понеділок", "Вівторок", "Середа", "Четвер", "П'ятниця", "Субота", "Неділя"],
+    active_sched_prefix: "Заплановано на",
+    active_sched_recurring: "Повторюваний",
+    active_sched_once: "Одноразово",
+    active_sched_updates: "Включно з оновленнями",
+    active_sched_no_updates: "Лише перезапуск",
+    intercept_alert: "⚠️ Автоматичний перезапуск успішно перехоплено: очікування завершення інших оновлень.",
+    processing: "Обробка...",
+    global_progress: "Загальний прогрес",
+    item_progress: "Поточний елемент",
+    easter_egg_hint: "Тричі натисніть на SOCRATE RULES для виходу",
+    easter_egg_sub: "Візуальний досвід <strong>високої філософії</strong>.",
+    easter_egg_instructions: "Рухайте мишкою та клацайте будь-де",
+    sched_success: "Розклад успішно збережено!",
+    sched_cancelled: "Розклад скасовано."
+  }
+};
+
 class RestartHAPanel extends HTMLElement {
   constructor() {
     super();
@@ -35,6 +330,11 @@ class RestartHAPanel extends HTMLElement {
     this._updateAllChecked = true;
     this._unsubProgress = null;
     this._sidebarObserverAttached = false;
+    this._selectedHour = "04";
+    this._selectedMinute = "00";
+    this._selectedDay = null; // null = next occurrence (no day specified), 0=Mon..6=Sun
+    this._recurring = false;
+    this._tempHour = "04";
   }
 
   set hass(hass) {
@@ -144,6 +444,203 @@ class RestartHAPanel extends HTMLElement {
     if (updates.length > 0) {
       this._selectedEntityIds = new Set(updates.map((u) => u.entity_id));
       this._selectionInitialized = true;
+    }
+  }
+
+
+  _getLang() {
+    const haLang = this._hass?.language || this._hass?.locale?.language || navigator.language || "fr";
+    const code = haLang.substring(0, 2).toLowerCase();
+    return TRANSLATIONS[code] ? code : "fr";
+  }
+
+  t(key, params = {}) {
+    const lang = this._getLang();
+    let str = TRANSLATIONS[lang]?.[key] || TRANSLATIONS["fr"]?.[key] || TRANSLATIONS["en"]?.[key] || key;
+    for (const [k, v] of Object.entries(params)) {
+      str = str.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    }
+    return str;
+  }
+
+  _applyTranslations() {
+    if (!this._el) return;
+    if (this._el.panelSubtitle) this._el.panelSubtitle.textContent = this.t("panel_subtitle");
+    if (this._el.updateAllTitle) this._el.updateAllTitle.textContent = this.t("update_all_title");
+    if (this._el.updateAllDesc) this._el.updateAllDesc.textContent = this.t("update_all_desc");
+    if (this._el.updatesSummaryTitle) this._el.updatesSummaryTitle.textContent = this.t("available_updates");
+    if (this._el.selectToggleBtn) this._el.selectToggleBtn.textContent = this.t("toggle_all");
+
+    if (this._el.quickBtnTitle) this._el.quickBtnTitle.textContent = this.t("quick_restart");
+    if (this._el.quickBtnDesc) this._el.quickBtnDesc.textContent = this.t("quick_restart_desc");
+    if (this._el.systemBtnTitle) this._el.systemBtnTitle.textContent = this.t("system_restart");
+    if (this._el.systemBtnDesc) this._el.systemBtnDesc.textContent = this.t("system_restart_desc");
+    if (this._el.safeBtnTitle) this._el.safeBtnTitle.textContent = this.t("safe_boot");
+    if (this._el.safeBtnDesc) this._el.safeBtnDesc.textContent = this.t("safe_boot_desc");
+    if (this._el.cancelBtnTitle) this._el.cancelBtnTitle.textContent = this.t("cancel");
+
+    if (this._el.schedTitle) this._el.schedTitle.textContent = this.t("scheduled_title");
+    if (this._el.schedDesc) this._el.schedDesc.textContent = this.t("scheduled_desc");
+    if (this._el.dayPickerLabel) this._el.dayPickerLabel.textContent = this.t("day_label");
+    if (this._el.timePickerLabel) this._el.timePickerLabel.textContent = this.t("time_label");
+    if (this._el.recurringText) this._el.recurringText.textContent = this.t("recurring");
+    if (this._el.scheduleBtnText) this._el.scheduleBtnText.textContent = this.t("schedule_btn");
+    if (this._el.cancelSchedBtn) this._el.cancelSchedBtn.textContent = this.t("cancel_sched_btn");
+    if (this._el.chooseDayTitle) this._el.chooseDayTitle.textContent = this.t("choose_day");
+    if (this._el.hourStepHint) this._el.hourStepHint.textContent = this.t("select_hour");
+    if (this._el.minuteStepHint) this._el.minuteStepHint.textContent = this.t("select_min");
+
+    const dayNames = this.t("days");
+    if (this._selectedDay === null) {
+      if (this._el.dayPickerValue) this._el.dayPickerValue.textContent = this.t("no_day");
+    } else if (dayNames[this._selectedDay]) {
+      if (this._el.dayPickerValue) this._el.dayPickerValue.textContent = dayNames[this._selectedDay];
+    }
+  }
+
+  _toggleDayPicker() {
+    if (this._el.dayPickerPopover.style.display === "block") {
+      this._el.dayPickerPopover.style.display = "none";
+    } else {
+      this._el.timePickerPopover.style.display = "none";
+      this._renderDayOptions();
+      this._el.dayPickerPopover.style.display = "block";
+    }
+  }
+
+  _renderDayOptions() {
+    const list = this._el.dayOptionsList;
+    if (!list) return;
+    list.innerHTML = "";
+    const dayNames = this.t("days");
+
+    const noDayItem = document.createElement("div");
+    noDayItem.className = "day-option-item" + (this._selectedDay === null ? " selected" : "");
+    noDayItem.innerHTML = `<span>🌟 ${this.t("no_day")}</span>${this._selectedDay === null ? '<span class="check-icon">✓</span>' : ''}`;
+    noDayItem.onclick = (e) => {
+      e.stopPropagation();
+      this._selectedDay = null;
+      this._el.dayPickerValue.textContent = this.t("no_day");
+      this._el.dayPickerPopover.style.display = "none";
+    };
+    list.appendChild(noDayItem);
+
+    dayNames.forEach((dName, idx) => {
+      const item = document.createElement("div");
+      item.className = "day-option-item" + (this._selectedDay === idx ? " selected" : "");
+      item.innerHTML = `<span>📅 ${dName}</span>${this._selectedDay === idx ? '<span class="check-icon">✓</span>' : ''}`;
+      item.onclick = (e) => {
+        e.stopPropagation();
+        this._selectedDay = idx;
+        this._el.dayPickerValue.textContent = dName;
+        this._el.dayPickerPopover.style.display = "none";
+      };
+      list.appendChild(item);
+    });
+  }
+
+  _toggleTimePicker() {
+    if (this._el.timePickerPopover.style.display === "block") {
+      this._el.timePickerPopover.style.display = "none";
+    } else {
+      this._el.dayPickerPopover.style.display = "none";
+      this._showHourStep();
+      this._el.timePickerPopover.style.display = "block";
+    }
+  }
+
+  _showHourStep() {
+    this._el.chooseTimeTitle.textContent = this.t("choose_time_hour");
+    this._el.timeHourStep.style.display = "block";
+    this._el.timeMinuteStep.style.display = "none";
+
+    const grid = this._el.hourGrid;
+    grid.innerHTML = "";
+    for (let h = 0; h < 24; h++) {
+      const hStr = String(h).padStart(2, "0");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "time-btn" + (this._selectedHour === hStr ? " selected" : "");
+      btn.textContent = hStr;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        this._tempHour = hStr;
+        this._showMinuteStep();
+      };
+      grid.appendChild(btn);
+    }
+  }
+
+  _showMinuteStep() {
+    this._el.chooseTimeTitle.textContent = `${this.t("choose_time_min")} (${this._tempHour}:__)`;
+    this._el.timeHourStep.style.display = "none";
+    this._el.timeMinuteStep.style.display = "block";
+
+    const grid = this._el.minuteGrid;
+    grid.innerHTML = "";
+    const minutes = ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+    minutes.forEach((mStr) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "time-btn" + (this._selectedMinute === mStr ? " selected" : "");
+      btn.textContent = mStr;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        this._selectedHour = this._tempHour;
+        this._selectedMinute = mStr;
+        this._el.timePickerValue.textContent = `${this._selectedHour}:${this._selectedMinute}`;
+        this._el.timePickerPopover.style.display = "none";
+      };
+      grid.appendChild(btn);
+    });
+  }
+
+  async _handleScheduleRestart() {
+    if (!this._hass) return;
+
+    const updates = this._status.available_updates || this._scanAvailableUpdates();
+    const selectedList = updates
+      .filter((u) => this._selectedEntityIds.has(u.entity_id))
+      .map((u) => u.entity_id);
+
+    const shouldUpdate = this._updateAllChecked && selectedList.length > 0;
+    const scheduleTime = `${this._selectedHour}:${this._selectedMinute}`;
+    const scheduleDay = this._selectedDay;
+    const recurring = this._recurring;
+
+    try {
+      await this._hass.callWS({
+        type: "restart_ha/start_process",
+        action: "schedule_restart",
+        update_all: shouldUpdate,
+        entity_ids: selectedList,
+        schedule_time: scheduleTime,
+        schedule_day: scheduleDay,
+        recurring: recurring,
+      });
+
+      const dayNames = this.t("days");
+      const dayStr = scheduleDay !== null && dayNames[scheduleDay] ? ` (${dayNames[scheduleDay]})` : "";
+      const recStr = recurring ? ` • ${this.t("active_sched_recurring")}` : "";
+      const updStr = shouldUpdate ? ` • ${this.t("with_updates")}` : ` • ${this.t("reboot_only")}`;
+
+      this._status.status_message = `${this.t("sched_success")} : ${scheduleTime}${dayStr}${recStr}${updStr}`;
+      this._updateUI();
+    } catch (e) {
+      console.error("Schedule error:", e);
+      alert("Erreur de planification : " + (e.message || e));
+    }
+  }
+
+  async _cancelSchedule() {
+    if (!this._hass) return;
+    try {
+      await this._hass.callWS({ type: "restart_ha/cancel_schedule" });
+      this._status.scheduled_job = null;
+      this._status.status_message = this.t("sched_cancelled");
+      this._updateUI();
+    } catch (e) {
+      console.error("Cancel schedule error:", e);
     }
   }
 
@@ -317,7 +814,8 @@ class RestartHAPanel extends HTMLElement {
       this._status.current_entity_progress = 0;
       
       if (action === "schedule_restart") {
-        this._status.status_message = "Redémarrage planifié à " + extraPayload + "...";
+        await this._handleScheduleRestart();
+        return;
       } else if (action === "safe_boot") {
         this._status.status_message = "Initialisation du Mode Sans Échec...";
       } else {
@@ -897,6 +1395,289 @@ class RestartHAPanel extends HTMLElement {
           background: rgba(255, 255, 255, 0.14);
           color: #ffffff;
         }
+
+        /* Schedule Box Styles */
+        .schedule-box {
+          margin-bottom: 18px;
+          padding: 14px 16px;
+          background: rgba(15, 23, 42, 0.7);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 14px;
+          position: relative;
+          backdrop-filter: blur(10px);
+        }
+
+        .schedule-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+
+        .sched-mode-badge {
+          font-size: 11px;
+          font-weight: 600;
+          padding: 3px 10px;
+          border-radius: 9999px;
+          letter-spacing: 0.3px;
+          text-transform: uppercase;
+        }
+
+        .badge-with-updates {
+          background: rgba(56, 189, 248, 0.18);
+          color: #38bdf8;
+          border: 1px solid rgba(56, 189, 248, 0.35);
+        }
+
+        .badge-reboot-only {
+          background: rgba(255, 255, 255, 0.08);
+          color: #94a3b8;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Active Schedule Banner */
+        .active-sched-card {
+          background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(99, 102, 241, 0.15));
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          border-radius: 10px;
+          padding: 10px 14px;
+          margin-bottom: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+        }
+
+        .active-sched-info {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .active-sched-icon {
+          font-size: 20px;
+        }
+
+        .btn-cancel-sched {
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.4);
+          color: #fca5a5;
+          border-radius: 6px;
+          padding: 6px 12px;
+          font-size: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .btn-cancel-sched:hover {
+          background: rgba(239, 68, 68, 0.35);
+          color: #ffffff;
+        }
+
+        /* Controls Row */
+        .schedule-controls {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .picker-trigger-btn {
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.18);
+          border-radius: 8px;
+          color: #ffffff;
+          padding: 7px 12px;
+          font-size: 13px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: background 0.2s, border-color 0.2s;
+        }
+
+        .picker-trigger-btn:hover {
+          background: rgba(255, 255, 255, 0.14);
+          border-color: rgba(56, 189, 248, 0.5);
+        }
+
+        .picker-label {
+          color: #94a3b8;
+          font-size: 12px;
+        }
+
+        .picker-value {
+          font-weight: 600;
+          color: #38bdf8;
+        }
+
+        .recurring-label {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-size: 13px;
+          color: #e2e8f0;
+          cursor: pointer;
+          user-select: none;
+          margin-left: 2px;
+        }
+
+        .recurring-label input {
+          accent-color: #38bdf8;
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+        }
+
+        .btn-schedule-action {
+          margin-left: auto;
+          background: linear-gradient(135deg, #0284c7, #0369a1);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 8px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: transform 0.15s, background 0.2s;
+          box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+        }
+
+        .btn-schedule-action:hover {
+          background: linear-gradient(135deg, #0369a1, #075985);
+          transform: translateY(-1px);
+        }
+
+        /* Popovers */
+        .picker-popover {
+          position: absolute;
+          top: 100%;
+          left: 12px;
+          margin-top: 8px;
+          z-index: 9999;
+          background: #1e293b;
+          border: 1px solid rgba(56, 189, 248, 0.4);
+          border-radius: 12px;
+          padding: 14px;
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+          min-width: 270px;
+          backdrop-filter: blur(12px);
+        }
+
+        .popover-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 13px;
+          font-weight: 600;
+          color: #e2e8f0;
+          margin-bottom: 12px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .popover-close {
+          background: transparent;
+          border: none;
+          color: #94a3b8;
+          cursor: pointer;
+          font-size: 14px;
+          padding: 2px 6px;
+        }
+
+        .popover-close:hover {
+          color: #ffffff;
+        }
+
+        .step-hint {
+          font-size: 11px;
+          color: #94a3b8;
+          margin-bottom: 8px;
+        }
+
+        .time-grid {
+          display: grid;
+          gap: 6px;
+        }
+
+        .hour-grid {
+          grid-template-columns: repeat(6, 1fr);
+        }
+
+        .minute-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .time-btn {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 6px;
+          color: #ffffff;
+          padding: 7px 4px;
+          font-size: 12px;
+          font-family: monospace;
+          cursor: pointer;
+          text-align: center;
+          transition: all 0.15s ease;
+        }
+
+        .time-btn:hover {
+          background: rgba(56, 189, 248, 0.25);
+          border-color: #38bdf8;
+          color: #ffffff;
+          transform: scale(1.05);
+        }
+
+        .time-btn.selected {
+          background: #0284c7;
+          border-color: #38bdf8;
+          font-weight: 700;
+        }
+
+        .day-options-list {
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          max-height: 240px;
+          overflow-y: auto;
+        }
+
+        .day-option-item {
+          padding: 8px 12px;
+          border-radius: 8px;
+          font-size: 13px;
+          color: #e2e8f0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid transparent;
+          transition: background 0.15s, border-color 0.15s;
+        }
+
+        .day-option-item:hover {
+          background: rgba(56, 189, 248, 0.2);
+          border-color: rgba(56, 189, 248, 0.4);
+          color: #ffffff;
+        }
+
+        .day-option-item.selected {
+          background: rgba(56, 189, 248, 0.25);
+          border-color: #38bdf8;
+          font-weight: 600;
+          color: #38bdf8;
+        }
+
+        .check-icon {
+          color: #38bdf8;
+          font-weight: bold;
+        }
+
       </style>
 
       <div class="backdrop" id="backdrop">
@@ -909,7 +1690,7 @@ class RestartHAPanel extends HTMLElement {
               </div>
               <div>
                 <h3 class="header-title" id="headerTitle" style="cursor: pointer; user-select: none;">Restart Home Assistant</h3>
-                <div class="header-subtitle">Options de redémarrage & gestion des mises à jour</div>
+                <div class="header-subtitle" id="headerSubtitle">Options de redémarrage & gestion des mises à jour</div>
               </div>
             </div>
             <button class="close-btn" id="closeBtn" title="Fermer">
@@ -927,10 +1708,10 @@ class RestartHAPanel extends HTMLElement {
                 </div>
                 <div class="option-text">
                   <h4>
-                    Mettre tout à jour
+                    <span id="updateAllTitle">Mettre tout à jour</span>
                     <span class="badge-count" id="badgeCount" style="display: none;">0 sélectionnés</span>
                   </h4>
-                  <p>Applique les mises à jour sélectionnées avant l'action (bloque les redémarrages auto)</p>
+                  <p id="updateAllDesc">Applique les mises à jour sélectionnées avant l'action (bloque les redémarrages auto)</p>
                 </div>
               </div>
             </label>
@@ -985,15 +1766,82 @@ class RestartHAPanel extends HTMLElement {
               </div>
             </div>
 
-            <!-- Schedule UI -->
-            <div class="schedule-box" style="margin-bottom: 16px; padding: 12px; background: rgba(0,0,0,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
-              <div>
-                <strong style="display: block; font-size: 14px;">Redémarrage Planifié</strong>
-                <span style="font-size: 12px; color: rgba(255,255,255,0.6);">Choisissez l'heure d'exécution</span>
+            <!-- Schedule UI Box -->
+            <div class="schedule-box" id="scheduleBox">
+              <div class="schedule-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <svg style="width: 20px; height: 20px; fill: #38bdf8;" viewBox="0 0 24 24"><path d="M12 20C16.4 20 20 16.4 20 12C20 7.6 16.4 4 12 4C7.6 4 4 7.6 4 12C4 16.4 7.6 20 12 20M12 2C17.5 2 22 6.5 22 12C22 17.5 17.5 22 12 22C6.5 22 2 17.5 2 12C2 6.5 6.5 2 12 2M12.5 7V12.2L17 14.9L16.2 16.1L11 13V7H12.5Z"/></svg>
+                  <div>
+                    <strong id="schedTitle" style="display: block; font-size: 14px;">Redémarrage Planifié</strong>
+                    <span id="schedDesc" style="font-size: 11px; color: #94a3b8;">Exécution différée ou récurrente</span>
+                  </div>
+                </div>
+                <div id="schedModeBadge" class="sched-mode-badge badge-with-updates">Avec M.A.J</div>
               </div>
-              <div style="display: flex; gap: 8px;">
-                <input type="time" id="scheduleTime" style="padding: 6px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white;">
-                <button id="scheduleBtn" style="padding: 6px 12px; border-radius: 6px; border: none; background: var(--primary-color, #03a9f4); color: white; cursor: pointer;">Planifier</button>
+
+              <!-- Active Schedule Card -->
+              <div class="active-sched-card" id="activeSchedCard" style="display: none;">
+                <div class="active-sched-info">
+                  <span class="active-sched-icon">⏰</span>
+                  <div>
+                    <div id="activeSchedText" style="font-size: 13px; font-weight: 600; color: #38bdf8;">Planifié</div>
+                    <div id="activeSchedDetails" style="font-size: 11px; color: #cbd5e1;">Détails</div>
+                  </div>
+                </div>
+                <button type="button" class="btn-cancel-sched" id="cancelSchedBtn">Annuler</button>
+              </div>
+
+              <!-- Controls Row -->
+              <div class="schedule-controls" id="schedControls">
+                <!-- Day Button -->
+                <button type="button" class="picker-trigger-btn" id="dayPickerBtn" title="Choisir le jour">
+                  <span class="picker-label" id="dayPickerLabel">Jour :</span>
+                  <span class="picker-value" id="dayPickerValue">Prochaine heure</span>
+                  <svg style="width: 14px; height: 14px; fill: currentColor; margin-left: 2px;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+
+                <!-- Time Button -->
+                <button type="button" class="picker-trigger-btn" id="timePickerBtn" title="Choisir l'heure">
+                  <span class="picker-label" id="timePickerLabel">Heure :</span>
+                  <span class="picker-value" id="timePickerValue">04:00</span>
+                  <svg style="width: 14px; height: 14px; fill: currentColor; margin-left: 2px;" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+
+                <!-- Recurrence -->
+                <label class="recurring-label">
+                  <input type="checkbox" id="scheduleRecurringCb">
+                  <span id="recurringText">Récurrent</span>
+                </label>
+
+                <!-- Schedule Action Button -->
+                <button type="button" class="btn-schedule-action" id="scheduleBtn">
+                  <span id="scheduleBtnText">Planifier</span>
+                </button>
+              </div>
+
+              <!-- Day Popover -->
+              <div class="picker-popover" id="dayPickerPopover" style="display: none;">
+                <div class="popover-header">
+                  <span id="chooseDayTitle">Choisir le jour</span>
+                  <button type="button" class="popover-close" id="closeDayPicker">✕</button>
+                </div>
+                <div class="day-options-list" id="dayOptionsList"></div>
+              </div>
+
+              <!-- Time Popover -->
+              <div class="picker-popover" id="timePickerPopover" style="display: none;">
+                <div class="popover-header">
+                  <span id="chooseTimeTitle">Choisir l'heure (1/2)</span>
+                  <button type="button" class="popover-close" id="closeTimePicker">✕</button>
+                </div>
+                <div id="timeHourStep">
+                  <div class="step-hint" id="hourStepHint">Sélectionnez l'heure :</div>
+                  <div class="time-grid hour-grid" id="hourGrid"></div>
+                </div>
+                <div id="timeMinuteStep" style="display: none;">
+                  <div class="step-hint" id="minuteStepHint">Sélectionnez les minutes :</div>
+                  <div class="time-grid minute-grid" id="minuteGrid"></div>
+                </div>
               </div>
             </div>
 
@@ -1005,8 +1853,8 @@ class RestartHAPanel extends HTMLElement {
                     <svg viewBox="0 0 24 24"><path d="M7 2V13H10V22L17 10H13L17 2H7Z"/></svg>
                   </div>
                   <div class="btn-titles">
-                    <span class="btn-title">Redémarrage Rapide</span>
-                    <span class="btn-desc">Redémarre Home Assistant immédiatement (sans validation)</span>
+                    <span class="btn-title" id="quickBtnTitle">Redémarrage Rapide</span>
+                    <span class="btn-desc" id="quickBtnDesc">Redémarre Home Assistant immédiatement (sans validation)</span>
                   </div>
                 </div>
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
@@ -1018,8 +1866,8 @@ class RestartHAPanel extends HTMLElement {
                     <svg viewBox="0 0 24 24"><path d="M4 1H20C21.1 1 22 1.9 22 3V7C22 8.1 21.1 9 20 9H4C2.9 9 2 8.1 2 7V3C2 1.9 2.9 1 4 1M4 11H20C21.1 11 22 11.9 22 13V17C22 18.1 21.1 19 20 19H4C2.9 19 2 18.1 2 17V13C2 11.9 2.9 11 4 11M6 5C6 5.55 6.45 6 7 6C7.55 6 8 5.55 8 5C8 4.45 7.55 4 7 4C6.45 4 6 4.45 6 5M6 15C6 15.55 6.45 16 7 16C7.55 16 8 15.55 8 15C8 14.45 7.55 14 7 14C6.45 14 6 14.45 6 15Z"/></svg>
                   </div>
                   <div class="btn-titles">
-                    <span class="btn-title">Redémarrage Système</span>
-                    <span class="btn-desc">Redémarre l'hôte complet (Home Assistant + OS)</span>
+                    <span class="btn-title" id="systemBtnTitle">Redémarrage Système</span>
+                    <span class="btn-desc" id="systemBtnDesc">Redémarre l'hôte complet (Home Assistant + OS)</span>
                   </div>
                 </div>
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
@@ -1031,8 +1879,8 @@ class RestartHAPanel extends HTMLElement {
                     <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
                   </div>
                   <div class="btn-titles">
-                    <span class="btn-title">Mode Sans Échec</span>
-                    <span class="btn-desc">Redémarre sans les composants personnalisés</span>
+                    <span class="btn-title" id="safeBtnTitle">Mode Sans Échec</span>
+                    <span class="btn-desc" id="safeBtnDesc">Redémarre sans les composants personnalisés</span>
                   </div>
                 </div>
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
@@ -1044,7 +1892,7 @@ class RestartHAPanel extends HTMLElement {
                     <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z"/></svg>
                   </div>
                   <div class="btn-titles">
-                    <span class="btn-title">Annuler</span>
+                    <span class="btn-title" id="cancelBtnTitle">Annuler</span>
                     <span class="btn-desc" id="cancelBtnDesc">Ferme la fenêtre et retourne à l'accueil</span>
                   </div>
                 </div>
@@ -1060,7 +1908,11 @@ class RestartHAPanel extends HTMLElement {
     this._el = {
       backdrop: root.getElementById("backdrop"),
       closeBtn: root.getElementById("closeBtn"),
+      headerTitle: root.getElementById("headerTitle"),
+      panelSubtitle: root.getElementById("headerSubtitle"),
       updateAllCb: root.getElementById("updateAllCb"),
+      updateAllTitle: root.getElementById("updateAllTitle"),
+      updateAllDesc: root.getElementById("updateAllDesc"),
       badgeCount: root.getElementById("badgeCount"),
       updatesContainer: root.getElementById("updatesContainer"),
       updatesSummaryTitle: root.getElementById("updatesSummaryTitle"),
@@ -1080,13 +1932,50 @@ class RestartHAPanel extends HTMLElement {
       itemProgressPct: root.getElementById("itemProgressPct"),
       itemProgressFill: root.getElementById("itemProgressFill"),
       quickBtn: root.getElementById("quickRestartBtn"),
+      quickBtnTitle: root.getElementById("quickBtnTitle"),
+      quickBtnDesc: root.getElementById("quickBtnDesc"),
       systemBtn: root.getElementById("systemRestartBtn"),
+      systemBtnTitle: root.getElementById("systemBtnTitle"),
+      systemBtnDesc: root.getElementById("systemBtnDesc"),
       safeBtn: root.getElementById("safeBootBtn"),
-      scheduleBtn: root.getElementById("scheduleBtn"),
-      scheduleTime: root.getElementById("scheduleTime"),
+      safeBtnTitle: root.getElementById("safeBtnTitle"),
+      safeBtnDesc: root.getElementById("safeBtnDesc"),
       cancelBtn: root.getElementById("cancelBtn"),
+      cancelBtnTitle: root.getElementById("cancelBtnTitle"),
       cancelBtnDesc: root.getElementById("cancelBtnDesc"),
-      headerTitle: root.getElementById("headerTitle"),
+
+      // Schedule elements
+      schedBox: root.getElementById("scheduleBox"),
+      schedTitle: root.getElementById("schedTitle"),
+      schedDesc: root.getElementById("schedDesc"),
+      schedModeBadge: root.getElementById("schedModeBadge"),
+      activeSchedCard: root.getElementById("activeSchedCard"),
+      activeSchedText: root.getElementById("activeSchedText"),
+      activeSchedDetails: root.getElementById("activeSchedDetails"),
+      cancelSchedBtn: root.getElementById("cancelSchedBtn"),
+      dayPickerBtn: root.getElementById("dayPickerBtn"),
+      dayPickerLabel: root.getElementById("dayPickerLabel"),
+      dayPickerValue: root.getElementById("dayPickerValue"),
+      timePickerBtn: root.getElementById("timePickerBtn"),
+      timePickerLabel: root.getElementById("timePickerLabel"),
+      timePickerValue: root.getElementById("timePickerValue"),
+      scheduleRecurringCb: root.getElementById("scheduleRecurringCb"),
+      recurringText: root.getElementById("recurringText"),
+      scheduleBtn: root.getElementById("scheduleBtn"),
+      scheduleBtnText: root.getElementById("scheduleBtnText"),
+      dayPickerPopover: root.getElementById("dayPickerPopover"),
+      closeDayPicker: root.getElementById("closeDayPicker"),
+      dayOptionsList: root.getElementById("dayOptionsList"),
+      timePickerPopover: root.getElementById("timePickerPopover"),
+      closeTimePicker: root.getElementById("closeTimePicker"),
+      chooseDayTitle: root.getElementById("chooseDayTitle"),
+      chooseTimeTitle: root.getElementById("chooseTimeTitle"),
+      timeHourStep: root.getElementById("timeHourStep"),
+      hourStepHint: root.getElementById("hourStepHint"),
+      hourGrid: root.getElementById("hourGrid"),
+      timeMinuteStep: root.getElementById("timeMinuteStep"),
+      minuteStepHint: root.getElementById("minuteStepHint"),
+      minuteGrid: root.getElementById("minuteGrid"),
     };
 
     let titleClicks = [];
@@ -1113,18 +2002,48 @@ class RestartHAPanel extends HTMLElement {
     this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
     this._el.systemBtn.onclick = () => this._handleAction("system_restart");
     this._el.safeBtn.onclick = () => this._handleAction("safe_boot");
-    this._el.scheduleBtn.onclick = () => {
-      if (!this._el.scheduleTime.value) {
-        alert("Veuillez choisir une heure pour planifier.");
-        return;
-      }
-      this._handleAction("schedule_restart", this._el.scheduleTime.value);
-    };
     this._el.cancelBtn.onclick = () => this._handleAction("cancel");
+
+    // Schedule events
+    this._el.dayPickerBtn.onclick = (e) => {
+      e.stopPropagation();
+      this._toggleDayPicker();
+    };
+    this._el.timePickerBtn.onclick = (e) => {
+      e.stopPropagation();
+      this._toggleTimePicker();
+    };
+    this._el.closeDayPicker.onclick = (e) => {
+      e.stopPropagation();
+      this._el.dayPickerPopover.style.display = "none";
+    };
+    this._el.closeTimePicker.onclick = (e) => {
+      e.stopPropagation();
+      this._el.timePickerPopover.style.display = "none";
+    };
+    this._el.scheduleRecurringCb.onchange = (e) => {
+      this._recurring = e.target.checked;
+    };
+    this._el.scheduleBtn.onclick = () => this._handleScheduleRestart();
+    this._el.cancelSchedBtn.onclick = () => this._cancelSchedule();
+
+    // Close popovers on click outside
+    this.shadowRoot.addEventListener("click", (e) => {
+      if (this._el.dayPickerPopover && !this._el.dayPickerPopover.contains(e.target) && e.target !== this._el.dayPickerBtn) {
+        this._el.dayPickerPopover.style.display = "none";
+      }
+      if (this._el.timePickerPopover && !this._el.timePickerPopover.contains(e.target) && e.target !== this._el.timePickerBtn) {
+        this._el.timePickerPopover.style.display = "none";
+      }
+    });
+
+    this._applyTranslations();
   }
 
   _updateUI() {
     if (!this._el) return;
+
+    this._applyTranslations();
 
     const updates = this._status.available_updates || this._scanAvailableUpdates();
     const totalCount = updates.length;
@@ -1142,7 +2061,7 @@ class RestartHAPanel extends HTMLElement {
     this._el.updateAllCb.checked = this._updateAllChecked;
 
     if (totalCount > 0 && this._updateAllChecked) {
-      this._el.badgeCount.textContent = `${selectedCount} sélectionné${selectedCount > 1 ? "s" : ""}`;
+      this._el.badgeCount.textContent = this.t("selected_count", { count: selectedCount, s: selectedCount > 1 ? "s" : "" });
       this._el.badgeCount.style.display = "inline-block";
     } else {
       this._el.badgeCount.style.display = "none";
@@ -1197,9 +2116,37 @@ class RestartHAPanel extends HTMLElement {
     this._el.closeBtn.disabled = isRunning;
 
     if (this._updateAllChecked && selectedCount > 0) {
-      this._el.cancelBtnDesc.textContent = "Applique les mises à jour sans redémarrer";
+      this._el.cancelBtnDesc.textContent = this.t("cancel_desc_updates");
     } else {
-      this._el.cancelBtnDesc.textContent = "Ferme la fenêtre et retourne à l'accueil";
+      this._el.cancelBtnDesc.textContent = this.t("cancel_desc");
+    }
+
+    // Sync schedModeBadge
+    if (this._updateAllChecked && selectedCount > 0) {
+      this._el.schedModeBadge.textContent = this.t("with_updates");
+      this._el.schedModeBadge.className = "sched-mode-badge badge-with-updates";
+    } else {
+      this._el.schedModeBadge.textContent = this.t("reboot_only");
+      this._el.schedModeBadge.className = "sched-mode-badge badge-reboot-only";
+    }
+
+    // Sync active schedule banner
+    const sched = this._status.scheduled_job;
+    if (sched && sched.next_run) {
+      this._el.activeSchedCard.style.display = "flex";
+      const nextDate = new Date(sched.next_run);
+      const dayNames = this.t("days");
+      const dayName = !isNaN(nextDate.getDay()) ? dayNames[(nextDate.getDay() + 6) % 7] : "";
+      const timeStr = `${String(nextDate.getHours()).padStart(2, "0")}:${String(nextDate.getMinutes()).padStart(2, "0")}`;
+      const dateStr = `${String(nextDate.getDate()).padStart(2, "0")}/${String(nextDate.getMonth() + 1).padStart(2, "0")}`;
+
+      this._el.activeSchedText.textContent = `${this.t("active_sched_prefix")} ${dayName} ${dateStr} à ${timeStr}`;
+
+      const recText = sched.recurring ? this.t("active_sched_recurring") : this.t("active_sched_once");
+      const updText = sched.update_all ? this.t("active_sched_updates") : this.t("active_sched_no_updates");
+      this._el.activeSchedDetails.textContent = `${recText} • ${updText}`;
+    } else {
+      this._el.activeSchedCard.style.display = "none";
     }
   }
 
@@ -1433,13 +2380,24 @@ function launchSocrateRulesEasterEgg(targetRoot) {
     <canvas id="socrateParticleCanvas"></canvas>
     <div class="socrate-container">
       <h1 class="socrate-title" id="socrateTitle">Socrate Rules</h1>
-      <p class="socrate-sub">Une expérience visuelle <strong>hautement philosophique</strong>.</p>
+      <p class="socrate-sub" id="socrateSub">Une expérience visuelle <strong>hautement philosophique</strong>.</p>
       <p class="socrate-exit-hint" id="socrateExitHint">Cliquez 3 fois sur <strong>SOCRATE RULES</strong> pour quitter</p>
     </div>
-    <div class="socrate-instructions">Bougez votre souris & cliquez n'importe où</div>
+    <div class="socrate-instructions" id="socrateInstructions">Bougez votre souris & cliquez n'importe où</div>
   `;
 
   targetRoot.appendChild(overlay);
+
+  // Localize easter egg strings if host has translation helper
+  const host = targetRoot.host;
+  if (host && typeof host.t === "function") {
+    const subEl = overlay.querySelector("#socrateSub");
+    const hintEl = overlay.querySelector("#socrateExitHint");
+    const instEl = overlay.querySelector("#socrateInstructions");
+    if (subEl) subEl.innerHTML = host.t("easter_egg_sub");
+    if (hintEl) hintEl.textContent = host.t("easter_egg_hint");
+    if (instEl) instEl.textContent = host.t("easter_egg_instructions");
+  }
 
   // Fade in animation
   requestAnimationFrame(() => {

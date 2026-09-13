@@ -1,0 +1,49 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Restart HA",
+        "description": "Möchten Sie das Restart HA-Panel einrichten?"
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Nur eine Instanz von Restart HA ist zulässig."
+    }
+  },
+  "services": {
+    "quick_restart": {
+      "name": "Schneller Neustart",
+      "description": "Startet Home Assistant sofort neu, mit optionaler vorheriger Aktualisierung.",
+      "fields": {
+        "update_all": {
+          "name": "Alles aktualisieren",
+          "description": "Wendet alle ausstehenden Updates vor dem Neustart an."
+        }
+      }
+    },
+    "system_restart": {
+      "name": "System-Neustart",
+      "description": "Startet das gesamte System neu (Home Assistant OS / Host), mit optionalem Update.",
+      "fields": {
+        "update_all": {
+          "name": "Alles aktualisieren",
+          "description": "Wendet alle ausstehenden Updates vor dem Neustart an."
+        }
+      }
+    },
+    "update_all": {
+      "name": "Alles aktualisieren",
+      "description": "Führt alle verfügbaren Updates aus und fängt Zwischenneustarts ab.",
+      "fields": {
+        "action": {
+          "name": "Abschließende Aktion",
+          "description": "Nach Abschluss der Updates auszuführende Aktion."
+        }
+      }
+    },
+    "cancel_schedule": {
+      "name": "Zeitplan abbrechen",
+      "description": "Bricht jeden aktiven geplanten Neustart oder jedes Update ab."
+    }
+  }
+}

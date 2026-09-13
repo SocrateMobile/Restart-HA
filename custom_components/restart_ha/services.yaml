@@ -34,3 +34,7 @@ update_all:
             - "quick_restart"
             - "system_restart"
             - "cancel"
+
+cancel_schedule:
+  name: Annuler la planification
+  description: Annule tout redémarrage ou mise à jour planifié actif.

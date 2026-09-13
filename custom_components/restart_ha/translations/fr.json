@@ -9,5 +9,41 @@
     "abort": {
       "single_instance_allowed": "Une seule instance de Restart HA est autorisée."
     }
+  },
+  "services": {
+    "quick_restart": {
+      "name": "Redémarrage Rapide",
+      "description": "Redémarre Home Assistant immédiatement, avec option préalable de mise à jour globale.",
+      "fields": {
+        "update_all": {
+          "name": "Mettre tout à jour",
+          "description": "Applique toutes les mises à jour avant de redémarrer."
+        }
+      }
+    },
+    "system_restart": {
+      "name": "Redémarrage Système",
+      "description": "Redémarre l'hôte complet (Home Assistant OS / Machine), avec option préalable de mise à jour.",
+      "fields": {
+        "update_all": {
+          "name": "Mettre tout à jour",
+          "description": "Applique toutes les mises à jour avant de redémarrer."
+        }
+      }
+    },
+    "update_all": {
+      "name": "Mettre tout à jour",
+      "description": "Exécute l'ensemble des mises à jour disponibles en interceptant les redémarrages.",
+      "fields": {
+        "action": {
+          "name": "Action finale",
+          "description": "Action à effectuer à la fin des mises à jour."
+        }
+      }
+    },
+    "cancel_schedule": {
+      "name": "Annuler la planification",
+      "description": "Annule tout redémarrage ou mise à jour planifié actif."
+    }
   }
 }

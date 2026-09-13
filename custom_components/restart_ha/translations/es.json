@@ -1,0 +1,49 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Restart HA",
+        "description": "¿Desea configurar el panel Restart HA?"
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Solo se permite una única instancia de Restart HA."
+    }
+  },
+  "services": {
+    "quick_restart": {
+      "name": "Reinicio Rápido",
+      "description": "Reinicia Home Assistant de inmediato, con opción previa de actualización.",
+      "fields": {
+        "update_all": {
+          "name": "Actualizar todo",
+          "description": "Aplica todas las actualizaciones antes de reiniciar."
+        }
+      }
+    },
+    "system_restart": {
+      "name": "Reinicio del Sistema",
+      "description": "Reinicia el host completo (Home Assistant OS / Máquina), con opción de actualización.",
+      "fields": {
+        "update_all": {
+          "name": "Actualizar todo",
+          "description": "Aplica todas las actualizaciones antes de reiniciar."
+        }
+      }
+    },
+    "update_all": {
+      "name": "Actualizar todo",
+      "description": "Ejecuta todas las actualizaciones disponibles interceptando reinicios intermedios.",
+      "fields": {
+        "action": {
+          "name": "Acción final",
+          "description": "Acción a realizar tras completar las actualizaciones."
+        }
+      }
+    },
+    "cancel_schedule": {
+      "name": "Cancelar programación",
+      "description": "Cancela cualquier reinicio o actualización programada activa."
+    }
+  }
+}
