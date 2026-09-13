@@ -1103,9 +1103,9 @@ class RestartHAPanel extends HTMLElement {
       if (!this._el.scheduleTime.value) {
         alert("Veuillez choisir une heure pour planifier.");
         return;
-    this._el.selectToggleBtn.onclick = () => this._toggleSelectAllItems();
-    this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
-    this._el.systemBtn.onclick = () => this._handleAction("system_restart");
+      }
+      this._handleAction("schedule_restart", this._el.scheduleTime.value);
+    };
     this._el.cancelBtn.onclick = () => this._handleAction("cancel");
   }
 

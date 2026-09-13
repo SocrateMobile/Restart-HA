@@ -18,6 +18,9 @@ Intégration Home Assistant personnalisée ajoutant un bouton dédié **Restart 
   - **⚡ Redémarrage Rapide** : Redémarre Home Assistant immédiatement sans confirmation superflue.
   - **🖥️ Redémarrage Système** : Redémarre complètement la machine hôte (Home Assistant OS + Machine).
   - **❌ Annuler** : Ferme la popin et revient directement à l'accueil / tableau de bord Lovelace.
+  - **⏱️ Redémarrage Planifié** : Choisissez une heure précise pour différer le redémarrage.
+  - **🛡️ Mode Sans Échec** : Lancez HA sans les composants personnalisés (custom_components) en cas de problème.
+
 - **🔄 Option "Mettre tout à jour"** :
   - Détecte l'ensemble des entités `update.*` (intégrations HACS, intégrations custom, add-ons superviseur, thèmes, Core).
   - Affiche la liste des éléments à mettre à jour avec versions actuelles et cibles (`1.0.0 ➜ 1.1.0`).
