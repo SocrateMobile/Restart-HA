@@ -282,7 +282,7 @@ class RestartHAPanel extends HTMLElement {
     }
   }
 
-  async _handleAction(action) {
+  async _handleAction(action, extraPayload = null) {
     if (!this._hass) return;
 
     const updates = this._status.available_updates || this._scanAvailableUpdates();
@@ -301,27 +301,36 @@ class RestartHAPanel extends HTMLElement {
 
       if (action === "system_restart") {
         await this._rebootHost();
-      } else {
+        return;
+      } else if (action === "quick_restart") {
         await this._quickRestart();
+        return;
       }
-      return;
     }
 
-    // Pipeline mode: Selective or all updates
+    // Pipeline mode (or Scheduled/Safe Boot via backend)
     try {
       this._restartTriggered = false;
       this._status.is_running = true;
       this._status.current_action = action;
       this._status.global_progress = 0;
       this._status.current_entity_progress = 0;
-      this._status.status_message = "Initialisation des mises à jour sélectionnées...";
+      
+      if (action === "schedule_restart") {
+        this._status.status_message = "Redémarrage planifié à " + extraPayload + "...";
+      } else if (action === "safe_boot") {
+        this._status.status_message = "Initialisation du Mode Sans Échec...";
+      } else {
+        this._status.status_message = "Initialisation des mises à jour sélectionnées...";
+      }
       this._updateUI();
 
       await this._hass.callWS({
         type: "restart_ha/start_process",
         action: action,
-        update_all: true,
+        update_all: shouldUpdate,
         entity_ids: selectedList,
+        schedule_time: action === "schedule_restart" ? extraPayload : null,
       });
     } catch (e) {
       this._status.is_running = false;
@@ -460,7 +469,7 @@ class RestartHAPanel extends HTMLElement {
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(10, 15, 29, 0.78);
+          background: color-mix(in srgb, var(--primary-background-color, #0a0f1d) 78%, transparent);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           display: flex;
@@ -471,7 +480,7 @@ class RestartHAPanel extends HTMLElement {
         }
 
         .modal {
-          background: var(--card-background-color, #1e293b);
+          background: color-mix(in srgb, var(--card-background-color, #1e293b) 85%, transparent);
           border: 1px solid rgba(255, 255, 255, 0.12);
           border-radius: 20px;
           width: 100%;
@@ -976,6 +985,18 @@ class RestartHAPanel extends HTMLElement {
               </div>
             </div>
 
+            <!-- Schedule UI -->
+            <div class="schedule-box" style="margin-bottom: 16px; padding: 12px; background: rgba(0,0,0,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <strong style="display: block; font-size: 14px;">Redémarrage Planifié</strong>
+                <span style="font-size: 12px; color: rgba(255,255,255,0.6);">Choisissez l'heure d'exécution</span>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="time" id="scheduleTime" style="padding: 6px; border-radius: 6px; border: none; background: rgba(255,255,255,0.1); color: white;">
+                <button id="scheduleBtn" style="padding: 6px 12px; border-radius: 6px; border: none; background: var(--primary-color, #03a9f4); color: white; cursor: pointer;">Planifier</button>
+              </div>
+            </div>
+
             <!-- Action Buttons Grid -->
             <div class="actions-grid">
               <button class="btn btn-quick" id="quickRestartBtn">
@@ -999,6 +1020,19 @@ class RestartHAPanel extends HTMLElement {
                   <div class="btn-titles">
                     <span class="btn-title">Redémarrage Système</span>
                     <span class="btn-desc">Redémarre l'hôte complet (Home Assistant + OS)</span>
+                  </div>
+                </div>
+                <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
+              </button>
+
+              <button class="btn btn-system" id="safeBootBtn" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);">
+                <div class="btn-content">
+                  <div class="btn-icon" style="color: #ef4444;">
+                    <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+                  </div>
+                  <div class="btn-titles">
+                    <span class="btn-title">Mode Sans Échec</span>
+                    <span class="btn-desc">Redémarre sans les composants personnalisés</span>
                   </div>
                 </div>
                 <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z"/></svg>
@@ -1047,6 +1081,9 @@ class RestartHAPanel extends HTMLElement {
       itemProgressFill: root.getElementById("itemProgressFill"),
       quickBtn: root.getElementById("quickRestartBtn"),
       systemBtn: root.getElementById("systemRestartBtn"),
+      safeBtn: root.getElementById("safeBootBtn"),
+      scheduleBtn: root.getElementById("scheduleBtn"),
+      scheduleTime: root.getElementById("scheduleTime"),
       cancelBtn: root.getElementById("cancelBtn"),
       cancelBtnDesc: root.getElementById("cancelBtnDesc"),
     };
@@ -1058,6 +1095,14 @@ class RestartHAPanel extends HTMLElement {
       }
     };
     this._el.updateAllCb.onchange = (e) => this._toggleUpdateAll(e.target.checked);
+    this._el.selectToggleBtn.onclick = () => this._toggleSelectAllItems();
+    this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
+    this._el.systemBtn.onclick = () => this._handleAction("system_restart");
+    this._el.safeBtn.onclick = () => this._handleAction("safe_boot");
+    this._el.scheduleBtn.onclick = () => {
+      if (!this._el.scheduleTime.value) {
+        alert("Veuillez choisir une heure pour planifier.");
+        return;
     this._el.selectToggleBtn.onclick = () => this._toggleSelectAllItems();
     this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
     this._el.systemBtn.onclick = () => this._handleAction("system_restart");

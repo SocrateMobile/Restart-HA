@@ -32,6 +32,8 @@ from .const import (
     ACTION_CANCEL,
     ACTION_QUICK_RESTART,
     ACTION_SYSTEM_RESTART,
+    ACTION_SAFE_BOOT,
+    ACTION_SCHEDULE_RESTART,
     DOMAIN,
     FRONTEND_FILE_NAME,
     FRONTEND_URL_PATH,
@@ -254,6 +256,24 @@ class RestartOrchestrator:
                     if stop_handler:
                         await stop_handler(self.hass, True)
 
+        elif action == ACTION_SAFE_BOOT:
+            _LOGGER.info("Restart HA: Executing Safe Boot...")
+            try:
+                if self.hass.services.has_service("homeassistant", "restart"):
+                    await self.hass.services.async_call(
+                        "homeassistant", "restart", {"safe_mode": True}, blocking=False
+                    )
+                else:
+                    _LOGGER.warning("Safe Boot not fully supported, falling back to quick restart")
+                    stop_handler = self.hass.data.get("homeassistant.stop_handler")
+                    if stop_handler:
+                        await stop_handler(self.hass, True)
+            except Exception as err:
+                _LOGGER.warning("Error calling safe boot service: %s", err)
+                stop_handler = self.hass.data.get("homeassistant.stop_handler")
+                if stop_handler:
+                    await stop_handler(self.hass, True)
+
         elif action == ACTION_SYSTEM_RESTART:
             _LOGGER.info("Restart HA: Executing System Reboot...")
             reboot_done = False
@@ -293,11 +313,15 @@ class RestartOrchestrator:
         action: str,
         update_all: bool = False,
         entity_ids: list[str] | None = None,
+        schedule_time: str | None = None,
     ) -> None:
         """Start the requested action or update pipeline in background."""
         # If no updates requested, or empty selection passed
         if not update_all or (entity_ids is not None and len(entity_ids) == 0):
-            self.hass.async_create_task(self.execute_restart_action(action))
+            if schedule_time:
+                self.hass.async_create_task(self._wait_and_execute(action, schedule_time))
+            else:
+                self.hass.async_create_task(self.execute_restart_action(action))
             return
 
         if self.is_running:
@@ -310,16 +334,47 @@ class RestartOrchestrator:
         self.current_entity_progress = 0
         self.global_progress = 0
         self.status_message = "Préparation des mises à jour..."
+        
+        if schedule_time:
+            self.status_message = f"Planifié à {schedule_time}. En attente..."
+            
         self.broadcast_progress()
 
         self._task = self.hass.async_create_task(
-            self._run_update_pipeline(action, entity_ids)
+            self._run_update_pipeline(action, entity_ids, schedule_time)
         )
 
+    async def _wait_and_execute(self, action: str, schedule_time: str) -> None:
+        """Wait for the scheduled time and then execute action."""
+        await self._wait_for_schedule(schedule_time)
+        await self.execute_restart_action(action)
+
+    async def _wait_for_schedule(self, schedule_time: str) -> None:
+        """Wait until the scheduled time (HH:MM) is reached."""
+        import datetime
+        try:
+            target_time = datetime.datetime.strptime(schedule_time, "%H:%M").time()
+        except ValueError:
+            return
+        
+        while True:
+            now = datetime.datetime.now().time()
+            if now >= target_time and (now.hour > target_time.hour or now.minute >= target_time.minute):
+                break
+            # If the scheduled time is earlier today, assume it's for tomorrow
+            if now > target_time and (now.hour > target_time.hour or now.minute > target_time.minute):
+                pass # it means we passed it today, we should wait until tomorrow
+            await asyncio.sleep(10)
+
     async def _run_update_pipeline(
-        self, action: str, entity_ids: list[str] | None
+        self, action: str, entity_ids: list[str] | None, schedule_time: str | None = None
     ) -> None:
-        """Sequential execution of updates with continuous smooth progress calculation."""
+        """Parallel execution of updates with watchdog and schedule support."""
+        if schedule_time:
+            self.status_message = f"En attente jusqu'à {schedule_time}..."
+            self.broadcast_progress()
+            await self._wait_for_schedule(schedule_time)
+            
         self.enable_restart_interception()
         try:
             if entity_ids is not None:
@@ -335,75 +390,70 @@ class RestartOrchestrator:
                 self.broadcast_progress()
                 await asyncio.sleep(1)
             else:
-                for idx, eid in enumerate(targets):
-                    self.current_index = idx + 1
-                    self.current_entity_id = eid
-                    st = self.hass.states.get(eid)
-                    self.current_entity_name = (
-                        (st.attributes.get("friendly_name") or eid) if st else eid
-                    )
-                    self.current_entity_progress = 5
-                    self.global_progress = int(
-                        ((idx + (self.current_entity_progress / 100.0)) / self.total_updates)
-                        * 100
-                    )
-                    self.status_message = (
-                        f"Mise à jour de {self.current_entity_name} ({self.current_index}/{self.total_updates})..."
-                    )
-                    self.broadcast_progress()
-
-                    try:
-                        await self.hass.services.async_call(
-                            "update",
-                            "install",
-                            {"entity_id": eid, "backup": False},
-                            blocking=False,
-                        )
-                    except Exception as err:
-                        _LOGGER.error("Restart HA: Error calling update.install on %s: %s", eid, err)
-                        self.errors.append(f"{eid}: {err}")
-                        continue
-
-                    wait_seconds = 0
-                    simulated_pct = 10
-                    while wait_seconds < 300:
-                        await asyncio.sleep(1.5)
-                        wait_seconds += 2
-                        cur_st = self.hass.states.get(eid)
-                        if not cur_st:
-                            break
-
-                        pct = cur_st.attributes.get("update_percentage")
-                        if pct is not None:
-                            self.current_entity_progress = max(5, min(95, int(pct)))
-                        else:
-                            simulated_pct = min(90, simulated_pct + 4)
-                            self.current_entity_progress = simulated_pct
-
-                        self.global_progress = int(
-                            ((idx + (self.current_entity_progress / 100.0)) / self.total_updates)
-                            * 100
-                        )
+                self.current_index = 0
+                semaphore = asyncio.Semaphore(3)
+                
+                async def _update_single_entity(eid: str):
+                    async with semaphore:
+                        st = self.hass.states.get(eid)
+                        entity_name = (st.attributes.get("friendly_name") or eid) if st else eid
+                        self.status_message = f"Installation de {entity_name}..."
                         self.broadcast_progress()
+                        
+                        try:
+                            await self.hass.services.async_call(
+                                "update",
+                                "install",
+                                {"entity_id": eid, "backup": False},
+                                blocking=False,
+                            )
+                        except Exception as err:
+                            _LOGGER.error("Restart HA: Error on %s: %s", eid, err)
+                            self.errors.append(f"{eid}: {err}")
+                            self.current_index += 1
+                            return
 
-                        in_progress = cur_st.attributes.get("in_progress", False)
-                        inst_v = cur_st.attributes.get("installed_version")
-                        lat_v = cur_st.attributes.get("latest_version")
-                        state_val = cur_st.state
-
-                        if not in_progress:
-                            if (
-                                state_val == "off"
-                                or (inst_v and lat_v and inst_v == lat_v)
-                                or wait_seconds >= 8
-                            ):
+                        wait_seconds = 0
+                        last_pct = -1
+                        idle_time = 0
+                        
+                        while wait_seconds < 300:
+                            await asyncio.sleep(1.5)
+                            wait_seconds += 1.5
+                            cur_st = self.hass.states.get(eid)
+                            if not cur_st:
+                                break
+                                
+                            pct = cur_st.attributes.get("update_percentage")
+                            if pct is not None:
+                                pct_val = int(pct)
+                                if pct_val == last_pct:
+                                    idle_time += 1.5
+                                else:
+                                    last_pct = pct_val
+                                    idle_time = 0
+                            else:
+                                idle_time += 1.5
+                                
+                            # Strict Watchdog
+                            if idle_time > 45:
+                                _LOGGER.warning("Restart HA: Watchdog timeout (45s idle) on %s, skipping.", eid)
+                                self.errors.append(f"{eid} bloqué (Watchdog)")
                                 break
 
-                    self.current_entity_progress = 100
-                    self.global_progress = int(((idx + 1) / self.total_updates) * 100)
-                    self.status_message = f"{self.current_entity_name} mis à jour avec succès !"
-                    self.broadcast_progress()
-                    await asyncio.sleep(0.8)
+                            in_progress = cur_st.attributes.get("in_progress", False)
+                            inst_v = cur_st.attributes.get("installed_version")
+                            lat_v = cur_st.attributes.get("latest_version")
+                            
+                            if not in_progress and (cur_st.state == "off" or (inst_v and lat_v and inst_v == lat_v) or wait_seconds >= 8):
+                                break
+                                
+                        self.current_index += 1
+                        self.global_progress = int((self.current_index / self.total_updates) * 100)
+                        self.broadcast_progress()
+                
+                # Execute all updates concurrently with a concurrency limit of 3
+                await asyncio.gather(*( _update_single_entity(eid) for eid in targets ))
 
             self.status_message = "Toutes les mises à jour sont terminées !"
             self.global_progress = 100
@@ -428,6 +478,11 @@ class RestartOrchestrator:
                 self.broadcast_progress()
                 await asyncio.sleep(1)
                 await self.execute_restart_action(ACTION_SYSTEM_RESTART)
+            elif action == ACTION_SAFE_BOOT:
+                self.status_message = "Redémarrage en Mode Sans Échec en cours..."
+                self.broadcast_progress()
+                await asyncio.sleep(1)
+                await self.execute_restart_action(ACTION_SAFE_BOOT)
             elif action == ACTION_QUICK_RESTART or self.restart_intercepted:
                 self.status_message = "Redémarrage de Home Assistant en cours..."
                 self.broadcast_progress()
@@ -570,10 +625,11 @@ def _register_websocket_commands(
         {
             vol.Required("type"): WS_TYPE_START_PROCESS,
             vol.Required("action"): vol.In(
-                [ACTION_QUICK_RESTART, ACTION_SYSTEM_RESTART, ACTION_CANCEL]
+                [ACTION_QUICK_RESTART, ACTION_SYSTEM_RESTART, ACTION_CANCEL, ACTION_SAFE_BOOT, ACTION_SCHEDULE_RESTART]
             ),
             vol.Optional("update_all", default=False): bool,
             vol.Optional("entity_ids"): [str],
+            vol.Optional("schedule_time"): vol.Any(str, None),
         }
     )
     @websocket_api.async_response
@@ -587,6 +643,7 @@ def _register_websocket_commands(
                 action=msg["action"],
                 update_all=msg.get("update_all", False),
                 entity_ids=msg.get("entity_ids"),
+                schedule_time=msg.get("schedule_time"),
             )
             connection.send_result(msg["id"], {"status": "started"})
         except Exception as err:
@@ -616,7 +673,9 @@ def _register_services(hass: HomeAssistant, orchestrator: RestartOrchestrator) -
 
     async def handle_system_restart(call: ServiceCall) -> None:
         update_all = call.data.get("update_all", False)
-        orchestrator.start_process(ACTION_SYSTEM_RESTART, update_all=update_all)
+        orchestrator.start_process(ACTION_SYSTEM_RESTART,
+    ACTION_SAFE_BOOT,
+    ACTION_SCHEDULE_RESTART, update_all=update_all)
 
     async def handle_update_all(call: ServiceCall) -> None:
         action = call.data.get("action", ACTION_QUICK_RESTART)

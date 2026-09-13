@@ -16,6 +16,8 @@ FRONTEND_FILE_NAME = "restart-ha-panel.js"
 ACTION_QUICK_RESTART = "quick_restart"
 ACTION_SYSTEM_RESTART = "system_restart"
 ACTION_CANCEL = "cancel"
+ACTION_SAFE_BOOT = "safe_boot"
+ACTION_SCHEDULE_RESTART = "schedule_restart"
 
 # WebSocket message types
 WS_TYPE_START_PROCESS = "restart_ha/start_process"
