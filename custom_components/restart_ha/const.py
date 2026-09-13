@@ -3,7 +3,7 @@ from __future__ import annotations
 
 DOMAIN = "restart_ha"
 NAME = "Restart HA"
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 
 PANEL_URL_PATH = "restart_ha"
 PANEL_TITLE = "Restart HA"
@@ -23,4 +23,9 @@ ACTION_SCHEDULE_RESTART = "schedule_restart"
 WS_TYPE_START_PROCESS = "restart_ha/start_process"
 WS_TYPE_GET_STATUS = "restart_ha/get_status"
 WS_TYPE_ABORT_PROCESS = "restart_ha/abort_process"
+WS_TYPE_CANCEL_SCHEDULE = "restart_ha/cancel_schedule"
 WS_EVENT_PROGRESS = "restart_ha_progress"
+
+# Storage
+STORAGE_KEY = "restart_ha_schedule"
+STORAGE_VERSION = 1

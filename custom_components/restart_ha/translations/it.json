@@ -1,0 +1,49 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Restart HA",
+        "description": "Vuoi installare il pannello Restart HA?"
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "È consentita una sola istanza di Restart HA."
+    }
+  },
+  "services": {
+    "quick_restart": {
+      "name": "Riavvio Rapido",
+      "description": "Riavvia Home Assistant immediatamente, con opzione di aggiornamento preventivo.",
+      "fields": {
+        "update_all": {
+          "name": "Aggiorna tutto",
+          "description": "Applica tutti gli aggiornamenti prima di riavviare."
+        }
+      }
+    },
+    "system_restart": {
+      "name": "Riavvio di Sistema",
+      "description": "Riavvia l'intero host (Home Assistant OS / Macchina), con aggiornamento opzionale.",
+      "fields": {
+        "update_all": {
+          "name": "Aggiorna tutto",
+          "description": "Applica tutti gli aggiornamenti prima di riavviare."
+        }
+      }
+    },
+    "update_all": {
+      "name": "Aggiorna tutto",
+      "description": "Esegue tutti gli aggiornamenti disponibili intercettando i riavvii intermedi.",
+      "fields": {
+        "action": {
+          "name": "Azione finale",
+          "description": "Azione da eseguire al termine degli aggiornamenti."
+        }
+      }
+    },
+    "cancel_schedule": {
+      "name": "Annulla pianificazione",
+      "description": "Annulla qualsiasi riavvio o aggiornamento programmato attivo."
+    }
+  }
+}
