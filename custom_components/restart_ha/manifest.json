@@ -5,13 +5,14 @@
     "@SocrateMobile"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/SocrateMobile/Restart-HA",
-  "issue_tracker": "https://github.com/SocrateMobile/Restart-HA/issues",
-  "iot_class": "calculated",
   "dependencies": [
     "frontend",
     "http",
     "websocket_api"
   ],
-  "version": "1.2.2"
+  "documentation": "https://github.com/SocrateMobile/Restart-HA",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/SocrateMobile/Restart-HA/issues",
+  "version": "1.2.3"
 }
+
