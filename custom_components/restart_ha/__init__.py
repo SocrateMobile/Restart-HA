@@ -17,6 +17,7 @@ import voluptuous as vol
 from homeassistant.components import frontend, websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
@@ -58,6 +59,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS: list[str] = ["update"]
 
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 SCHEMA_RESTART = vol.Schema({vol.Optional("safe_mode", default=False): bool})
 
 
