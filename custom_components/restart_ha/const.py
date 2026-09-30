@@ -1,9 +1,17 @@
 """Constants for the Restart HA integration."""
 from __future__ import annotations
 
+import json
+import os
+
 DOMAIN = "restart_ha"
 NAME = "Restart HA"
-VERSION = "1.2.3"
+_MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "manifest.json")
+try:
+    with open(_MANIFEST_PATH, "r", encoding="utf-8") as _f:
+        VERSION = json.load(_f).get("version", "unknown")
+except Exception:
+    VERSION = "unknown"
 
 PANEL_URL_PATH = "restart_ha"
 PANEL_TITLE = "Restart HA"
