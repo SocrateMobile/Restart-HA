@@ -46,7 +46,7 @@ def get_token() -> str:
 
 
 def update_version_files(new_ver: str) -> None:
-    """Update version in manifest.json and const.py."""
+    """Update version in manifest.json (Single Source of Truth)."""
     # 1. manifest.json
     with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -55,14 +55,6 @@ def update_version_files(new_ver: str) -> None:
         json.dump(data, f, indent=2)
         f.write("\n")
     print(f"Updated {MANIFEST_PATH} -> {new_ver}")
-
-    # 2. const.py
-    with open(CONST_PATH, "r", encoding="utf-8") as f:
-        content = f.read()
-    new_content = re.sub(r'VERSION\s*=\s*"[^"]+"', f'VERSION = "{new_ver}"', content)
-    with open(CONST_PATH, "w", encoding="utf-8") as f:
-        f.write(new_content)
-    print(f"Updated {CONST_PATH} -> {new_ver}")
 
 
 def run_cmd(cmd: list[str]) -> None:
