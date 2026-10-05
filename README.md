@@ -6,6 +6,8 @@
 
 Intégration Home Assistant personnalisée ajoutant un bouton dédié **Restart HA** dans la barre latérale gauche, ouvrant une popin modale pour redémarrer rapidement ou complètement votre système, avec la possibilité d'orchestrer la mise à jour complète de tous vos composants (intégrations, thèmes, add-ons, Core) avant le redémarrage.
 
+[![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy+me+a+coffee&emoji=☕&slug=Socrate&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/Socrate)
+
 ---
 
 ## ✨ Fonctionnalités Principales
