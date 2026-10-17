@@ -48,8 +48,13 @@ def parse_semver(version_str: str) -> tuple[int, ...]:
 
 
 def get_installed_version() -> str:
-    """Return installed version from const.VERSION."""
-    return VERSION
+    """Return installed version from manifest.json with fallback to const.VERSION."""
+    manifest_path = os.path.join(os.path.dirname(__file__), "manifest.json")
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            return json.load(f).get("version", VERSION)
+    except Exception:
+        return VERSION
 
 
 async def async_setup_entry(
