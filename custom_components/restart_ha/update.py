@@ -48,15 +48,7 @@ def parse_semver(version_str: str) -> tuple[int, ...]:
 
 
 def get_installed_version() -> str:
-    """Read version directly from manifest.json with fallback to const.VERSION."""
-    manifest_path = os.path.join(os.path.dirname(__file__), "manifest.json")
-    try:
-        if os.path.exists(manifest_path):
-            with open(manifest_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                return str(data.get("version", VERSION))
-    except Exception as err:
-        _LOGGER.warning("Could not read manifest.json version: %s", err)
+    """Return installed version from const.VERSION."""
     return VERSION
 
 
@@ -202,15 +194,14 @@ class RestartHAUpdateEntity(UpdateEntity):
         def _do_download_and_extract() -> None:
             import ssl
             import urllib.request
+            from pathlib import Path
 
             ctx = ssl.create_default_context()
             try:
                 import certifi
-
                 ctx.load_verify_locations(certifi.where())
             except Exception:
-                ctx.check_hostname = False
-                ctx.verify_mode = ssl.CERT_NONE
+                pass
 
             temp_dir = tempfile.mkdtemp(prefix="restart_ha_update_")
             zip_path = os.path.join(temp_dir, "release.zip")
@@ -226,8 +217,13 @@ class RestartHAUpdateEntity(UpdateEntity):
 
                 extract_path = os.path.join(temp_dir, "extracted")
                 os.makedirs(extract_path, exist_ok=True)
+                resolved_extract = Path(extract_path).resolve()
                 with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(extract_path)
+                    for member in zip_ref.infolist():
+                        member_path = (resolved_extract / member.filename).resolve()
+                        if not member_path.is_relative_to(resolved_extract):
+                            raise ValueError(f"Zip Slip détecté dans l'archive: {member.filename}")
+                        zip_ref.extract(member, extract_path)
 
                 source_component_dir = None
                 for root, _dirs, _files in os.walk(extract_path):
