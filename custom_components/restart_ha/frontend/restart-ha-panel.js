@@ -361,6 +361,13 @@ class RestartHAPanel extends HTMLElement {
       } catch (e) {}
       this._unsubProgress = null;
     }
+    if (this._sidebarObserver) {
+      try {
+        this._sidebarObserver.disconnect();
+      } catch (e) {}
+      this._sidebarObserver = null;
+      this._sidebarObserverAttached = false;
+    }
   }
 
   async _init() {
@@ -883,8 +890,8 @@ class RestartHAPanel extends HTMLElement {
       if (!this._sidebarObserverAttached) {
         this._sidebarObserverAttached = true;
         try {
-          const obs = new MutationObserver(() => this._syncSidebarBadge());
-          obs.observe(sidebar.shadowRoot, { childList: true, subtree: true });
+          this._sidebarObserver = new MutationObserver(() => this._syncSidebarBadge());
+          this._sidebarObserver.observe(sidebar.shadowRoot, { childList: true, subtree: true });
         } catch (e) {}
       }
 
@@ -2634,6 +2641,10 @@ function launchSocrateRulesEasterEgg(targetRoot) {
   }
 
   function animate() {
+    if (!overlay.isConnected) {
+      cleanup();
+      return;
+    }
     ctx.fillStyle = "rgba(3, 0, 8, 0.15)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 

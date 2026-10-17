@@ -239,9 +239,62 @@ class RestartOrchestrator:
         except Exception as err:
             _LOGGER.warning("Restart HA: Could not restore restart service: %s", err)
 
+    async def async_check_config(self) -> tuple[bool, str | None]:
+        """Validate Home Assistant configuration before executing a restart."""
+        try:
+            from homeassistant.config import async_check_ha_config_file
+            errors = await async_check_ha_config_file(self.hass)
+            if errors:
+                _LOGGER.error("Restart HA: Configuration check failed: %s", errors)
+                return False, str(errors)
+            return True, None
+        except Exception as err:
+            _LOGGER.debug("Direct async_check_ha_config_file check unavailable: %s", err)
+            try:
+                if self.hass.services.has_service("homeassistant", "check_config"):
+                    await self.hass.services.async_call("homeassistant", "check_config", blocking=True)
+                return True, None
+            except Exception as svc_err:
+                _LOGGER.warning("Config check service reported failure: %s", svc_err)
+                return False, str(svc_err)
+
+    async def _notify_config_error(self, error: str | None) -> None:
+        """Create a persistent notification in Home Assistant when config check fails."""
+        try:
+            msg = (
+                "Le redémarrage a été bloqué par sécurité par Restart HA car des erreurs "
+                f"de configuration ont été détectées :\n\n```\n{error or 'Erreur de syntaxe YAML inconnue'}\n```\n"
+                "Veuillez corriger votre configuration avant de redémarrer, ou utilisez le Mode Sans Échec."
+            )
+            if self.hass.services.has_service("persistent_notification", "create"):
+                await self.hass.services.async_call(
+                    "persistent_notification",
+                    "create",
+                    {
+                        "title": "Restart HA : Redémarrage sécurisé bloqué",
+                        "message": msg,
+                        "notification_id": "restart_ha_config_error",
+                    },
+                    blocking=False,
+                )
+        except Exception as err:
+            _LOGGER.debug("Could not create persistent notification: %s", err)
+
     async def execute_restart_action(self, action: str) -> None:
         """Execute the final restart or action."""
         self.disable_restart_interception()
+
+        if action in (ACTION_QUICK_RESTART, ACTION_SYSTEM_RESTART):
+            self.status_message = "Vérification de la configuration..."
+            self.broadcast_progress()
+            valid, error = await self.async_check_config()
+            if not valid:
+                _LOGGER.error("Restart HA: Restart aborted due to invalid configuration: %s", error)
+                self.errors.append(f"Configuration invalide : {error}")
+                self.status_message = "Redémarrage annulé : configuration YAML invalide !"
+                self.broadcast_progress()
+                await self._notify_config_error(error)
+                return
 
         if action == ACTION_QUICK_RESTART:
             _LOGGER.info("Restart HA: Executing Quick Restart...")
@@ -788,7 +841,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data.get(DOMAIN, {}).pop(entry.entry_id, None)
+        domain_data = hass.data.get(DOMAIN, {})
+        domain_data.pop(entry.entry_id, None)
+        orchestrator = domain_data.get("orchestrator")
+        active_entries = [k for k in domain_data if not k.startswith("_") and k != "orchestrator"]
+        if orchestrator and not active_entries:
+            orchestrator.abort_process()
+            orchestrator.disable_restart_interception()
     return unload_ok
 
 

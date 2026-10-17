@@ -3,6 +3,7 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/default)
 [![GitHub Release](https://img.shields.io/github/v/release/SocrateMobile/Restart-HA?color=blue)](https://github.com/SocrateMobile/Restart-HA/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Socrate-FFDD00?logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/Socrate)
 
 Intégration Home Assistant personnalisée ajoutant un bouton dédié **Restart HA** dans la barre latérale gauche, ouvrant une popin modale pour redémarrer rapidement ou complètement votre système, avec la possibilité d'orchestrer la mise à jour complète de tous vos composants (intégrations, thèmes, add-ons, Core) avant le redémarrage.
 
@@ -99,6 +100,15 @@ L'intégration expose également 3 services d'automatisation :
 | `restart_ha.update_all` | Lance les mises à jour avec interception | `action` (`quick_restart`, `system_restart`, `cancel`) |
 
 ---
+---
+
+## ☕ Soutenir le projet / Support
+
+Si vous appréciez cette intégration et souhaitez soutenir son développement continu ainsi que la maintenance des futures versions :
+
+<a href="https://buymeacoffee.com/Socrate" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50" width="210">
+</a>
 
 ## 📄 Licence
 
