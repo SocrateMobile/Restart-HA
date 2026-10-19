@@ -2247,13 +2247,28 @@ class RestartHAPanel extends HTMLElement {
 
         const isChecked = this._selectedEntityIds.has(u.entity_id);
 
-        itemRow.innerHTML = `
-          <div class="item-left">
-            <input type="checkbox" class="item-checkbox" data-entity-id="${u.entity_id}" ${isChecked ? "checked" : ""} ${isRunning ? "disabled" : ""}>
-            <span class="item-name">${u.title || u.name}</span>
-          </div>
-          <span class="version-tag">${u.installed_version} ➜ ${u.latest_version}</span>
-        `;
+        const itemLeft = document.createElement("div");
+        itemLeft.className = "item-left";
+
+        const cbInput = document.createElement("input");
+        cbInput.type = "checkbox";
+        cbInput.className = "item-checkbox";
+        cbInput.dataset.entityId = u.entity_id;
+        cbInput.checked = isChecked;
+        cbInput.disabled = isRunning;
+        itemLeft.appendChild(cbInput);
+
+        const itemName = document.createElement("span");
+        itemName.className = "item-name";
+        itemName.textContent = u.title || u.name || "";
+        itemLeft.appendChild(itemName);
+
+        const versionTag = document.createElement("span");
+        versionTag.className = "version-tag";
+        versionTag.textContent = `${u.installed_version || ""} ➜ ${u.latest_version || ""}`;
+
+        itemRow.appendChild(itemLeft);
+        itemRow.appendChild(versionTag);
 
         const cb = itemRow.querySelector(".item-checkbox");
         cb.addEventListener("change", (e) => {
