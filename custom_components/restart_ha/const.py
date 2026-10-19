@@ -10,9 +10,9 @@ NAME = "Restart HA"
 _MANIFEST_PATH = os.path.join(os.path.dirname(__file__), "manifest.json")
 try:
     with open(_MANIFEST_PATH, "r", encoding="utf-8") as _f:
-        VERSION = json.load(_f).get("version", "1.2.5")
+        VERSION = json.load(_f).get("version", "1.2.8")
 except Exception:
-    VERSION = "1.2.6"
+    VERSION = "1.2.8"
 
 PANEL_URL_PATH = "restart_ha"
 PANEL_TITLE = "Restart HA"

@@ -11,7 +11,9 @@
     "websocket_api"
   ],
   "documentation": "https://github.com/SocrateMobile/Restart-HA",
+  "integration_type": "service",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/SocrateMobile/Restart-HA/issues",
-  "version": "1.2.7"
+  "requirements": [],
+  "version": "1.2.8"
 }

@@ -1,4 +1,3 @@
-from homeassistant.helpers.service import async_register_admin_service
 """Custom integration: Restart HA.
 
 Provides a left sidebar panel with a restart popin dialog, orchestration of all
@@ -19,6 +18,7 @@ from homeassistant.components import frontend, websocket_api
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.service import async_register_admin_service
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
