@@ -12,7 +12,7 @@ try:
     with open(_MANIFEST_PATH, "r", encoding="utf-8") as _f:
         VERSION = json.load(_f).get("version", "1.2.5")
 except Exception:
-    VERSION = "1.2.5"
+    VERSION = "1.2.6"
 
 PANEL_URL_PATH = "restart_ha"
 PANEL_TITLE = "Restart HA"
