@@ -1,3 +1,4 @@
+from homeassistant.helpers.service import async_register_admin_service
 """Custom integration: Restart HA.
 
 Provides a left sidebar panel with a restart popin dialog, orchestration of all
@@ -799,7 +800,7 @@ def _register_services(hass: HomeAssistant, orchestrator: RestartOrchestrator) -
     async def handle_cancel_schedule(call: ServiceCall) -> None:
         await orchestrator.cancel_schedule()
 
-    hass.helpers.service.async_register_admin_service(hass, DOMAIN, "quick_restart", handle_quick_restart)
-    hass.helpers.service.async_register_admin_service(hass, DOMAIN, "system_restart", handle_system_restart)
-    hass.helpers.service.async_register_admin_service(hass, DOMAIN, "update_all", handle_update_all)
-    hass.helpers.service.async_register_admin_service(hass, DOMAIN, "cancel_schedule", handle_cancel_schedule)
+    async_register_admin_service(hass, DOMAIN, "quick_restart", handle_quick_restart)
+    async_register_admin_service(hass, DOMAIN, "system_restart", handle_system_restart)
+    async_register_admin_service(hass, DOMAIN, "update_all", handle_update_all)
+    async_register_admin_service(hass, DOMAIN, "cancel_schedule", handle_cancel_schedule)
