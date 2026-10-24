@@ -33,7 +33,7 @@
     },
     "update_all": {
       "name": "Update all",
-      "description": "Perform all available updates while intercepting intermediate reboots.",
+      "description": "Perform all available updates before executing the final action.",
       "fields": {
         "action": {
           "name": "Final action",

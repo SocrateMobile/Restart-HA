@@ -33,7 +33,7 @@
     },
     "update_all": {
       "name": "Mettre tout à jour",
-      "description": "Exécute l'ensemble des mises à jour disponibles en interceptant les redémarrages.",
+      "description": "Exécute l'ensemble des mises à jour disponibles avant l'action finale.",
       "fields": {
         "action": {
           "name": "Action finale",

@@ -27,12 +27,12 @@ Intégration Home Assistant personnalisée ajoutant un bouton dédié **Restart 
 - **🔄 Option "Mettre tout à jour"** :
   - Détecte l'ensemble des entités `update.*` (intégrations HACS, intégrations custom, add-ons superviseur, thèmes, Core).
   - Affiche la liste des éléments à mettre à jour avec versions actuelles et cibles (`1.0.0 ➜ 1.1.0`).
-  - **🛡️ Interception et blocage des redémarrages intempestifs** : Intercepte temporairement les appels à `homeassistant.restart` effectués par certaines intégrations lors de leur mise à jour, afin de garantir que **toutes** les mises à jour soient terminées avant de redémarrer.
+  - **📦 Orchestration séquentielle intelligente** : Exécute les mises à jour sélectionnées les unes après les autres avant de déclencher l'action finale choisie (redémarrage rapide, redémarrage système ou simple retour à l'accueil).
   - Si combiné avec **Annuler** (Option A) : applique toutes les mises à jour en cours puis revient à l'accueil **sans redémarrer**.
 - **📊 Doubles barres de progression dynamiques** :
   - **Barre d'avancement de l'élément en cours** : suit le pourcentage de téléchargement et d'installation de l'intégration traitée.
   - **Barre d'avancement globale** : affiche le statut cumulé de la file de traitement (`X sur Y`, pourcentage total).
-  - Journal en temps réel des étapes (ex: interception d'un redémarrage auto, mise à jour réussie).
+  - Journal en temps réel des étapes d'avancement de chaque mise à jour.
 - **🔍 Synthèse Intelligente des Versions & Détection des Breaking Changes** :
   - Analyse automatique et en temps réel des notes de versions (`release_notes` et `release_summary`) de l'ensemble de vos composants en attente.
   - **Alerte immédiate Breaking Changes** : Badge d'avertissement pulsant et récapitulatif détaillé des changements bloquants ou ruptures de compatibilité avant de lancer les mises à jour.
@@ -55,14 +55,11 @@ flowchart TD
     C -- Non --> D2[Redémarrage Système] --> E2[Appel hassio.host_reboot ou OS reboot]
     C -- Non --> D3[Annuler] --> E3[Fermeture et retour au tableau de bord]
 
-    C -- Oui --> F[Interception temporaire du service homeassistant.restart]
-    F --> G[Traitement séquentiel des entités update.*]
+    C -- Oui --> G[Traitement séquentiel des entités update.* sélectionnées]
     G --> H[Affichage double progression : en cours + globale]
-    H --> I[Capture & mise en attente de tout redémarrage intermédiaire]
-    I --> J{Toutes les mises à jour achevées ?}
+    H --> J{Toutes les mises à jour achevées ?}
     J -- Non --> G
-    J -- Oui --> K[Restauration du service de redémarrage]
-    K --> L{Action choisie ?}
+    J -- Oui --> L{Action choisie ?}
     L -- Redémarrage Rapide --> M1[Redémarrage propre de Home Assistant]
     L -- Redémarrage Système --> M2[Redémarrage complet du système hôte]
     L -- Annuler --> M3[Retour au tableau de bord sans redémarrage]
@@ -102,7 +99,7 @@ L'intégration expose également 3 services d'automatisation :
 |---|---|---|
 | `restart_ha.quick_restart` | Déclenche un redémarrage rapide de Home Assistant | `update_all` (booléen, optionnel) |
 | `restart_ha.system_restart` | Déclenche un redémarrage complet de l'hôte | `update_all` (booléen, optionnel) |
-| `restart_ha.update_all` | Lance les mises à jour avec interception | `action` (`quick_restart`, `system_restart`, `cancel`) |
+| `restart_ha.update_all` | Lance les mises à jour séquentielles suivies de l'action choisie | `action` (`quick_restart`, `system_restart`, `cancel`) |
 
 ---
 ---

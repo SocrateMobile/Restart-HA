@@ -22,7 +22,7 @@ system_restart:
 
 update_all:
   name: Mettre tout à jour
-  description: Exécute l'ensemble des mises à jour disponibles en interceptant les redémarrages intermédiaires.
+  description: Exécute l'ensemble des mises à jour disponibles avant d'appliquer l'action finale choisie.
   fields:
     action:
       name: Action finale
