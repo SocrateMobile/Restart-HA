@@ -2,7 +2,7 @@
  * Restart HA - Home Assistant Custom Panel & Modal Popin
  * Features:
  *  - Modal popin with Quick Restart, System Restart, Cancel
- *  - "Mettre tout à jour" option with auto-restart interception
+ *  - "Mettre tout à jour" option with parallel update orchestration
  *  - Selective item updates with individual checkboxes (all checked by default)
  *  - Real-time continuous item progress bar and global progress bar
  *  - Instant reliable restart execution (direct callService + WebSocket fallback)
@@ -19,7 +19,7 @@ const TRANSLATIONS = {
     panel_title: "Restart HA",
     panel_subtitle: "Options de redémarrage & gestion des mises à jour",
     update_all_title: "Mettre tout à jour",
-    update_all_desc: "Applique les mises à jour sélectionnées avant l'action (bloque les redémarrages auto)",
+    update_all_desc: "Applique les mises à jour sélectionnées avant l'action choisie",
     selected_count: "{count} sélectionné{s}",
     available_updates: "Mises à jour disponibles",
     toggle_all: "Tout basculer",
@@ -53,7 +53,6 @@ const TRANSLATIONS = {
     active_sched_once: "Une seule fois",
     active_sched_updates: "Mises à jour incluses",
     active_sched_no_updates: "Redémarrage seul",
-    intercept_alert: "⚠️ Redémarrage automatique intercepté avec succès : en attente de la fin des autres MAJ.",
     processing: "Traitement en cours...",
     global_progress: "Progression globale",
     item_progress: "Élément en cours",
@@ -81,7 +80,7 @@ const TRANSLATIONS = {
     panel_title: "Restart HA",
     panel_subtitle: "Restart options & updates management",
     update_all_title: "Update all",
-    update_all_desc: "Apply selected updates before action (intercepts automatic reboots)",
+    update_all_desc: "Apply selected updates before the chosen action",
     selected_count: "{count} selected",
     available_updates: "Available updates",
     toggle_all: "Toggle all",
@@ -115,7 +114,6 @@ const TRANSLATIONS = {
     active_sched_once: "One time",
     active_sched_updates: "Updates included",
     active_sched_no_updates: "Restart only",
-    intercept_alert: "⚠️ Automatic restart successfully intercepted: waiting for other updates.",
     processing: "Processing...",
     global_progress: "Global progress",
     item_progress: "Current item",
@@ -143,7 +141,7 @@ const TRANSLATIONS = {
     panel_title: "Restart HA",
     panel_subtitle: "Neustart-Optionen & Update-Verwaltung",
     update_all_title: "Alles aktualisieren",
-    update_all_desc: "Ausgewählte Updates vor der Aktion anwenden (blockiert automatische Neustarts)",
+    update_all_desc: "Ausgewählte Updates vor der gewählten Aktion anwenden",
     selected_count: "{count} ausgewählt",
     available_updates: "Verfügbare Updates",
     toggle_all: "Alle umschalten",
@@ -177,7 +175,6 @@ const TRANSLATIONS = {
     active_sched_once: "Einmalig",
     active_sched_updates: "Inklusive Updates",
     active_sched_no_updates: "Nur Neustart",
-    intercept_alert: "⚠️ Automatischer Neustart erfolgreich abgefangen: Warten auf verbleibende Updates.",
     processing: "Verarbeitung läuft...",
     global_progress: "Gesamtfortschritt",
     item_progress: "Aktuelles Element",
@@ -205,7 +202,7 @@ const TRANSLATIONS = {
     panel_title: "Restart HA",
     panel_subtitle: "Opzioni di riavvio e gestione aggiornamenti",
     update_all_title: "Aggiorna tutto",
-    update_all_desc: "Applica gli aggiornamenti selezionati prima dell'azione (intercetta i riavvii automatici)",
+    update_all_desc: "Applica gli aggiornamenti selezionati prima dell'azione scelta",
     selected_count: "{count} selezionati",
     available_updates: "Aggiornamenti disponibili",
     toggle_all: "Inverti selezione",
@@ -239,7 +236,6 @@ const TRANSLATIONS = {
     active_sched_once: "Una sola volta",
     active_sched_updates: "Aggiornamenti inclusi",
     active_sched_no_updates: "Solo riavvio",
-    intercept_alert: "⚠️ Riavvio automatico intercettato con successo: in attesa degli altri aggiornamenti.",
     processing: "Elaborazione in corso...",
     global_progress: "Avanzamento globale",
     item_progress: "Elemento corrente",
@@ -267,7 +263,7 @@ const TRANSLATIONS = {
     panel_title: "Restart HA",
     panel_subtitle: "Opciones de reinicio y gestión de actualizaciones",
     update_all_title: "Actualizar todo",
-    update_all_desc: "Aplica las actualizaciones seleccionadas antes de la acción (intercepta reinicios automáticos)",
+    update_all_desc: "Aplica las actualizaciones seleccionadas antes de la acción elegida",
     selected_count: "{count} seleccionado{s}",
     available_updates: "Actualizaciones disponibles",
     toggle_all: "Alternar todo",
@@ -301,7 +297,6 @@ const TRANSLATIONS = {
     active_sched_once: "Una sola vez",
     active_sched_updates: "Actualizaciones incluidas",
     active_sched_no_updates: "Solo reinicio",
-    intercept_alert: "⚠️ Reinicio automático interceptado con éxito: esperando el fin de las otras actualizaciones.",
     processing: "Procesando...",
     global_progress: "Progreso global",
     item_progress: "Elemento actual",
@@ -329,7 +324,7 @@ const TRANSLATIONS = {
     panel_title: "Restart HA",
     panel_subtitle: "Опції перезапуску та керування оновленнями",
     update_all_title: "Оновити все",
-    update_all_desc: "Встановити вибрані оновлення перед дією (блокує автоперезапуски)",
+    update_all_desc: "Встановити вибрані оновлення перед обраною дією",
     selected_count: "{count} вибрано",
     available_updates: "Доступні оновлення",
     toggle_all: "Перемкнути все",
@@ -363,7 +358,6 @@ const TRANSLATIONS = {
     active_sched_once: "Одноразово",
     active_sched_updates: "Включно з оновленнями",
     active_sched_no_updates: "Лише перезапуск",
-    intercept_alert: "⚠️ Автоматичний перезапуск успішно перехоплено: очікування завершення інших оновлень.",
     processing: "Обробка...",
     global_progress: "Загальний прогрес",
     item_progress: "Поточний елемент",
@@ -1730,18 +1724,6 @@ class RestartHAPanel extends HTMLElement {
           to { transform: rotate(360deg); }
         }
 
-        .intercept-alert {
-          background: rgba(245, 158, 11, 0.15);
-          border: 1px solid rgba(245, 158, 11, 0.4);
-          color: #fbbf24;
-          border-radius: 8px;
-          padding: 8px 12px;
-          font-size: 12px;
-          display: none;
-          align-items: center;
-          gap: 8px;
-        }
-
         .actions-grid {
           display: flex;
           flex-direction: column;
@@ -2162,7 +2144,7 @@ class RestartHAPanel extends HTMLElement {
                     <span id="updateAllTitle">Mettre tout à jour</span>
                     <span class="badge-count" id="badgeCount" style="display: none;">0 sélectionnés</span>
                   </h4>
-                  <p id="updateAllDesc">Applique les mises à jour sélectionnées avant l'action (bloque les redémarrages auto)</p>
+                  <p id="updateAllDesc">Applique les mises à jour sélectionnées avant l'action choisie</p>
                 </div>
               </div>
             </label>

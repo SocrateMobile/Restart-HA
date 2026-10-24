@@ -2,7 +2,7 @@
 
 Provides a left sidebar panel with a restart popin dialog, orchestration of all
 updates (integrations, themes, add-ons, core) with item and global progress bars,
-temporary interception of automatic restarts, selective item updates, and sidebar badge MAJ mechanism.
+selective item updates, and sidebar badge MAJ mechanism.
 """
 from __future__ import annotations
 
@@ -552,33 +552,41 @@ class RestartOrchestrator:
             self.broadcast_progress()
             await asyncio.sleep(1.2)
 
+        except asyncio.CancelledError:
+            _LOGGER.info("Restart HA: Update pipeline cancelled by user; skipping final restart action.")
+            self.is_running = False
+            self.status_message = "Processus interrompu."
+            self.broadcast_progress()
+            raise
         except Exception as exc:
             _LOGGER.error("Restart HA: Pipeline failed with error: %s", exc, exc_info=True)
             self.errors.append(str(exc))
             self.status_message = f"Erreur lors des mises à jour : {exc}"
             self.broadcast_progress()
+            self.is_running = False
+            return
         finally:
             self.is_running = False
 
-            if action == ACTION_CANCEL:
-                _LOGGER.info("Restart HA: Updates finished, action is Cancel: returning without restart.")
-                self.status_message = "Mises à jour terminées. Redémarrage annulé."
-                self.broadcast_progress()
-            elif action == ACTION_SYSTEM_RESTART:
-                self.status_message = "Redémarrage du système complet en cours..."
-                self.broadcast_progress()
-                await asyncio.sleep(1)
-                await self.execute_restart_action(ACTION_SYSTEM_RESTART)
-            elif action == ACTION_SAFE_BOOT:
-                self.status_message = "Redémarrage en Mode Sans Échec en cours..."
-                self.broadcast_progress()
-                await asyncio.sleep(1)
-                await self.execute_restart_action(ACTION_SAFE_BOOT)
-            elif action == ACTION_QUICK_RESTART:
-                self.status_message = "Redémarrage de Home Assistant en cours..."
-                self.broadcast_progress()
-                await asyncio.sleep(1)
-                await self.execute_restart_action(ACTION_QUICK_RESTART)
+        if action == ACTION_CANCEL:
+            _LOGGER.info("Restart HA: Updates finished, action is Cancel: returning without restart.")
+            self.status_message = "Mises à jour terminées. Redémarrage annulé."
+            self.broadcast_progress()
+        elif action == ACTION_SYSTEM_RESTART:
+            self.status_message = "Redémarrage du système complet en cours..."
+            self.broadcast_progress()
+            await asyncio.sleep(1)
+            await self.execute_restart_action(ACTION_SYSTEM_RESTART)
+        elif action == ACTION_SAFE_BOOT:
+            self.status_message = "Redémarrage en Mode Sans Échec en cours..."
+            self.broadcast_progress()
+            await asyncio.sleep(1)
+            await self.execute_restart_action(ACTION_SAFE_BOOT)
+        elif action == ACTION_QUICK_RESTART:
+            self.status_message = "Redémarrage de Home Assistant en cours..."
+            self.broadcast_progress()
+            await asyncio.sleep(1)
+            await self.execute_restart_action(ACTION_QUICK_RESTART)
 
     def abort_process(self) -> None:
         """Abort currently running process."""

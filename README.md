@@ -27,7 +27,7 @@ Intégration Home Assistant personnalisée ajoutant un bouton dédié **Restart 
 - **🔄 Option "Mettre tout à jour"** :
   - Détecte l'ensemble des entités `update.*` (intégrations HACS, intégrations custom, add-ons superviseur, thèmes, Core).
   - Affiche la liste des éléments à mettre à jour avec versions actuelles et cibles (`1.0.0 ➜ 1.1.0`).
-  - **📦 Orchestration séquentielle intelligente** : Exécute les mises à jour sélectionnées les unes après les autres avant de déclencher l'action finale choisie (redémarrage rapide, redémarrage système ou simple retour à l'accueil).
+  - **📦 Orchestration parallèle intelligente** : Exécute les mises à jour sélectionnées en parallèle (jusqu'à 3 mises à jour simultanées) avant de déclencher l'action finale choisie (redémarrage rapide, redémarrage système ou simple retour à l'accueil).
   - Si combiné avec **Annuler** (Option A) : applique toutes les mises à jour en cours puis revient à l'accueil **sans redémarrer**.
 - **📊 Doubles barres de progression dynamiques** :
   - **Barre d'avancement de l'élément en cours** : suit le pourcentage de téléchargement et d'installation de l'intégration traitée.
@@ -55,7 +55,7 @@ flowchart TD
     C -- Non --> D2[Redémarrage Système] --> E2[Appel hassio.host_reboot ou OS reboot]
     C -- Non --> D3[Annuler] --> E3[Fermeture et retour au tableau de bord]
 
-    C -- Oui --> G[Traitement séquentiel des entités update.* sélectionnées]
+    C -- Oui --> G[Traitement parallèle des entités update.* sélectionnées - jusqu'à 3 simultanées]
     G --> H[Affichage double progression : en cours + globale]
     H --> J{Toutes les mises à jour achevées ?}
     J -- Non --> G
@@ -99,7 +99,7 @@ L'intégration expose également 3 services d'automatisation :
 |---|---|---|
 | `restart_ha.quick_restart` | Déclenche un redémarrage rapide de Home Assistant | `update_all` (booléen, optionnel) |
 | `restart_ha.system_restart` | Déclenche un redémarrage complet de l'hôte | `update_all` (booléen, optionnel) |
-| `restart_ha.update_all` | Lance les mises à jour séquentielles suivies de l'action choisie | `action` (`quick_restart`, `system_restart`, `cancel`) |
+| `restart_ha.update_all` | Lance les mises à jour en parallèle suivies de l'action choisie | `action` (`quick_restart`, `system_restart`, `cancel`) |
 
 ---
 ---
