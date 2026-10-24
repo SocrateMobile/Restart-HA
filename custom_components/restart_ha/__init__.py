@@ -112,6 +112,7 @@ class RestartOrchestrator:
                             "installed_version": attrs.get("installed_version") or "Inconnue",
                             "latest_version": attrs.get("latest_version") or "Nouvelle version",
                             "release_summary": attrs.get("release_summary"),
+                            "release_url": attrs.get("release_url"),
                             "entity_picture": attrs.get("entity_picture"),
                             "in_progress": attrs.get("in_progress", False),
                             "update_percentage": attrs.get("update_percentage"),

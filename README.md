@@ -33,6 +33,11 @@ Intégration Home Assistant personnalisée ajoutant un bouton dédié **Restart 
   - **Barre d'avancement de l'élément en cours** : suit le pourcentage de téléchargement et d'installation de l'intégration traitée.
   - **Barre d'avancement globale** : affiche le statut cumulé de la file de traitement (`X sur Y`, pourcentage total).
   - Journal en temps réel des étapes (ex: interception d'un redémarrage auto, mise à jour réussie).
+- **🔍 Synthèse Intelligente des Versions & Détection des Breaking Changes** :
+  - Analyse automatique et en temps réel des notes de versions (`release_notes` et `release_summary`) de l'ensemble de vos composants en attente.
+  - **Alerte immédiate Breaking Changes** : Badge d'avertissement pulsant et récapitulatif détaillé des changements bloquants ou ruptures de compatibilité avant de lancer les mises à jour.
+  - **Tiroir de détails par composant** : Consultez d'un simple clic les nouveautés majeures, points de vigilance et liens officiels vers les notes de versions.
+  - **Vue Synthèse globale** : Affiche un tableau de bord consolidé pour décider en toute sérénité avant de valider vos mises à jour.
 - **🏷️ Badge "MAJ" dans la barre latérale** :
   - Utilise la mécanique universelle persistante avec `MutationObserver`.
   - Injecte dynamiquement le badge stylisé dégradé rouge/orange `MAJ` dès qu'une mise à jour est en attente dans Home Assistant.

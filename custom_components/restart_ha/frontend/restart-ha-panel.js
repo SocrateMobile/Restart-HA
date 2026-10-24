@@ -61,7 +61,21 @@ const TRANSLATIONS = {
     easter_egg_sub: "Une expérience visuelle <strong>hautement philosophique</strong>.",
     easter_egg_instructions: "Bougez votre souris & cliquez n'importe où",
     sched_success: "Planification enregistrée avec succès !",
-    sched_cancelled: "Planification annulée."
+    sched_cancelled: "Planification annulée.",
+    synthesis_btn: "Synthèse des MAJ",
+    synthesis_back: "← Liste",
+    breaking_pill: "changement{s} bloquant{s}",
+    breaking_badge: "⚠️ Breaking",
+    breaking_title: "Changements bloquants (Breaking Changes)",
+    breaking_warning: "Attention : {count} composant{s} avec changements bloquants",
+    highlights_title: "Nouveautés & Évolutions majeures",
+    official_notes: "Notes officielles",
+    no_breaking_found: "Aucun changement bloquant détecté",
+    synthesis_title: "Synthèse des versions & Breaking Changes",
+    synthesis_subtitle: "Analyse automatique des notes de version avant mise à jour",
+    synthesis_empty: "Aucune note disponible pour ces composants.",
+    loading_notes: "Analyse des notes de version en cours...",
+    view_notes: "Notes"
   },
   en: {
     panel_title: "Restart HA",
@@ -109,7 +123,21 @@ const TRANSLATIONS = {
     easter_egg_sub: "A <strong>highly philosophical</strong> visual experience.",
     easter_egg_instructions: "Move your mouse & click anywhere",
     sched_success: "Schedule successfully registered!",
-    sched_cancelled: "Schedule cancelled."
+    sched_cancelled: "Schedule cancelled.",
+    synthesis_btn: "Updates Digest",
+    synthesis_back: "← List",
+    breaking_pill: "breaking change{s}",
+    breaking_badge: "⚠️ Breaking",
+    breaking_title: "Breaking Changes",
+    breaking_warning: "Warning: {count} component{s} with breaking changes",
+    highlights_title: "Highlights & Key Features",
+    official_notes: "Official Notes",
+    no_breaking_found: "No breaking changes detected",
+    synthesis_title: "Updates Digest & Breaking Changes",
+    synthesis_subtitle: "Automatic changelog analysis for pending updates",
+    synthesis_empty: "No release notes available for these components.",
+    loading_notes: "Analyzing release notes...",
+    view_notes: "Notes"
   },
   de: {
     panel_title: "Restart HA",
@@ -157,7 +185,21 @@ const TRANSLATIONS = {
     easter_egg_sub: "Eine <strong>höchst philosophische</strong> visuelle Erfahrung.",
     easter_egg_instructions: "Maus bewegen & überall klicken",
     sched_success: "Zeitplan erfolgreich gespeichert!",
-    sched_cancelled: "Zeitplan abgebrochen."
+    sched_cancelled: "Zeitplan abgebrochen.",
+    synthesis_btn: "Update-Übersicht",
+    synthesis_back: "← Liste",
+    breaking_pill: "Breaking Change{s}",
+    breaking_badge: "⚠️ Breaking",
+    breaking_title: "Wichtige Änderungen (Breaking Changes)",
+    breaking_warning: "Warnung: {count} Komponente(n) mit Breaking Changes",
+    highlights_title: "Wichtigste Neuerungen",
+    official_notes: "Offizielle Versionshinweise",
+    no_breaking_found: "Keine Breaking Changes erkannt",
+    synthesis_title: "Update-Übersicht & Breaking Changes",
+    synthesis_subtitle: "Automatische Analyse der Änderungsprotokolle",
+    synthesis_empty: "Keine Versionshinweise verfügbar.",
+    loading_notes: "Versionshinweise werden analysiert...",
+    view_notes: "Notizen"
   },
   it: {
     panel_title: "Restart HA",
@@ -205,7 +247,21 @@ const TRANSLATIONS = {
     easter_egg_sub: "Un'esperienza visiva <strong>altamente filosofica</strong>.",
     easter_egg_instructions: "Muovi il mouse e fai clic ovunque",
     sched_success: "Pianificazione salvata con successo!",
-    sched_cancelled: "Pianificazione annullata."
+    sched_cancelled: "Pianificazione annullata.",
+    synthesis_btn: "Riepilogo MAJ",
+    synthesis_back: "← Elenco",
+    breaking_pill: "modifica/he importante/i",
+    breaking_badge: "⚠️ Breaking",
+    breaking_title: "Modifiche importanti (Breaking Changes)",
+    breaking_warning: "Attenzione: {count} componente/i con breaking changes",
+    highlights_title: "Novità ed evoluzioni principali",
+    official_notes: "Note ufficiali",
+    no_breaking_found: "Nessuna breaking change rilevata",
+    synthesis_title: "Riepilogo versioni & Breaking Changes",
+    synthesis_subtitle: "Analisi automatica delle note di rilascio",
+    synthesis_empty: "Nessuna nota disponibile per questi componenti.",
+    loading_notes: "Analisi delle note di rilascio in corso...",
+    view_notes: "Note"
   },
   es: {
     panel_title: "Restart HA",
@@ -253,7 +309,21 @@ const TRANSLATIONS = {
     easter_egg_sub: "Una experiencia visual <strong>altamente filosófica</strong>.",
     easter_egg_instructions: "Mueve el ratón y haz clic en cualquier lugar",
     sched_success: "¡Programación guardada con éxito!",
-    sched_cancelled: "Programación cancelada."
+    sched_cancelled: "Programación cancelada.",
+    synthesis_btn: "Resumen MAJ",
+    synthesis_back: "← Lista",
+    breaking_pill: "cambio{s} importante{s}",
+    breaking_badge: "⚠️ Breaking",
+    breaking_title: "Cambios importantes (Breaking Changes)",
+    breaking_warning: "Advertencia: {count} componente(s) con cambios importantes",
+    highlights_title: "Novedades principales",
+    official_notes: "Notas oficiales",
+    no_breaking_found: "No se detectaron cambios importantes",
+    synthesis_title: "Resumen de versiones & Breaking Changes",
+    synthesis_subtitle: "Análisis automático de las notas de versión",
+    synthesis_empty: "No hay notas disponibles para estos componentes.",
+    loading_notes: "Analizando notas de versión...",
+    view_notes: "Notas"
   },
   uk: {
     panel_title: "Restart HA",
@@ -301,9 +371,91 @@ const TRANSLATIONS = {
     easter_egg_sub: "Візуальний досвід <strong>високої філософії</strong>.",
     easter_egg_instructions: "Рухайте мишкою та клацайте будь-де",
     sched_success: "Розклад успішно збережено!",
-    sched_cancelled: "Розклад скасовано."
+    sched_cancelled: "Розклад скасовано.",
+    synthesis_btn: "Огляд оновлень",
+    synthesis_back: "← Список",
+    breaking_pill: "важлива(-их) зміна(-ин)",
+    breaking_badge: "⚠️ Breaking",
+    breaking_title: "Важливі зміни (Breaking Changes)",
+    breaking_warning: "Увага: {count} компонент(-ів) з важливими змінами",
+    highlights_title: "Основні новинки",
+    official_notes: "Офіційні примітки",
+    no_breaking_found: "Важливих змін не виявлено",
+    synthesis_title: "Огляд версій & Breaking Changes",
+    synthesis_subtitle: "Автоматичний аналіз приміток до випуску",
+    synthesis_empty: "Немає доступних приміток для цих компонентів.",
+    loading_notes: "Аналіз приміток до випуску...",
+    view_notes: "Примітки"
   }
 };
+
+/* =========================================================================
+ * 🔍 RELEASE NOTES & BREAKING CHANGES ANALYZER
+ * ========================================================================= */
+function _analyzeReleaseNotes(rawText) {
+  if (!rawText) {
+    return { hasBreaking: false, breakingChanges: [], highlights: [], rawText: "" };
+  }
+  const clean = String(rawText)
+    .replace(/<\/(?:p|li|h[1-6]|div|tr)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "");
+
+  const lines = clean.split(/\r?\n/);
+  const breaking = [];
+  const highlights = [];
+
+  const breakingHeaderRegex = /^(?:#+\s*|\*{2}|_{2})?(?:⚠️\s*)?(?:breaking(?:\s+changes?)?|ruptures?(?:\s+de\s+compatibilit[ée])?|changements?\s+bloquants?|incompatibilit[ée]s?)(?:\*{2}|_{2})?:?/i;
+  const highlightHeaderRegex = /^(?:#+\s*|\*{2}|_{2})?(?:✨\s*|🎉\s*|🌟\s*|🚀\s*)?(?:features?|nouveaut[ée]s?|new\s+features?|highlights?|what\x27s\s+new|what\x27s\s+changed|évolutions?|améliorations?)(?:\*{2}|_{2})?:?/i;
+  const genericHeaderRegex = /^#{1,4}\s+|^\*{2}[^*]+?\*{2}$/;
+
+  let currentSection = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    if (breakingHeaderRegex.test(line)) {
+      currentSection = "breaking";
+      continue;
+    } else if (highlightHeaderRegex.test(line)) {
+      currentSection = "highlight";
+      continue;
+    } else if (genericHeaderRegex.test(line)) {
+      currentSection = "other";
+    }
+
+    const isBullet = /^[-*•]\s+/.test(line);
+    const hasInlineBreaking = /\b(?:breaking(?:\s+change)?|changement\s+bloquant|incompatibilit[ée]|rupture)\b/i.test(line);
+
+    if (currentSection === "breaking") {
+      if (isBullet || line.length > 0) {
+        const item = line.replace(/^[-*•]\s+/, "").trim();
+        if (item && !breaking.includes(item)) breaking.push(item);
+      }
+    } else if (currentSection === "highlight") {
+      if (isBullet) {
+        const item = line.replace(/^[-*•]\s+/, "").trim();
+        if (item && !highlights.includes(item)) highlights.push(item);
+      }
+    } else if (isBullet && hasInlineBreaking) {
+      const item = line.replace(/^[-*•]\s+/, "").trim();
+      if (item && !breaking.includes(item)) breaking.push(item);
+    } else if (isBullet && highlights.length < 5 && currentSection !== "other") {
+      const item = line.replace(/^[-*•]\s+/, "").trim();
+      if (item && !highlights.includes(item)) highlights.push(item);
+    }
+  }
+
+  const hasBreaking = breaking.length > 0 || /\b(?:breaking\s+changes?|changement(?:s)?\s+bloquant(?:s)?)\b/i.test(clean);
+
+  return {
+    hasBreaking,
+    breakingChanges: breaking.slice(0, 10),
+    highlights: highlights.slice(0, 8),
+    rawText: clean
+  };
+}
 
 class RestartHAPanel extends HTMLElement {
   constructor() {
@@ -335,6 +487,9 @@ class RestartHAPanel extends HTMLElement {
     this._selectedDay = null; // null = next occurrence (no day specified), 0=Mon..6=Sun
     this._recurring = false;
     this._tempHour = "04";
+    this._releaseNotesData = {};
+    this._synthesisMode = false;
+    this._expandedItemNotes = new Set();
   }
 
   set hass(hass) {
@@ -436,6 +591,8 @@ class RestartHAPanel extends HTMLElement {
           title: attrs.title || attrs.friendly_name || entityId,
           installed_version: attrs.installed_version || "Inconnue",
           latest_version: attrs.latest_version || "Nouvelle version",
+          release_summary: attrs.release_summary || null,
+          release_url: attrs.release_url || null,
           entity_picture: attrs.entity_picture,
           update_percentage: attrs.update_percentage,
           in_progress: attrs.in_progress || false,
@@ -477,6 +634,11 @@ class RestartHAPanel extends HTMLElement {
     if (this._el.updateAllDesc) this._el.updateAllDesc.textContent = this.t("update_all_desc");
     if (this._el.updatesSummaryTitle) this._el.updatesSummaryTitle.textContent = this.t("available_updates");
     if (this._el.selectToggleBtn) this._el.selectToggleBtn.textContent = this.t("toggle_all");
+    if (this._el.synthesisBtnText) {
+      this._el.synthesisBtnText.textContent = this._synthesisMode
+        ? this.t("synthesis_back")
+        : this.t("synthesis_btn");
+    }
 
     if (this._el.quickBtnTitle) this._el.quickBtnTitle.textContent = this.t("quick_restart");
     if (this._el.quickBtnDesc) this._el.quickBtnDesc.textContent = this.t("quick_restart_desc");
@@ -1288,6 +1450,224 @@ class RestartHAPanel extends HTMLElement {
           margin-left: 8px;
         }
 
+        /* Synthesis Button & Badges */
+        .synthesis-toggle-btn {
+          background: rgba(56, 189, 248, 0.12);
+          border: 1px solid rgba(56, 189, 248, 0.35);
+          color: #38bdf8;
+          font-size: 11px;
+          font-weight: 600;
+          cursor: pointer;
+          padding: 3px 8px;
+          border-radius: 6px;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          transition: all 0.2s ease;
+        }
+
+        .synthesis-toggle-btn:hover {
+          background: rgba(56, 189, 248, 0.25);
+          border-color: #38bdf8;
+          box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+        }
+
+        .synthesis-toggle-btn.active {
+          background: #0284c7;
+          color: #ffffff;
+          border-color: #38bdf8;
+        }
+
+        .breaking-pill-badge {
+          background: linear-gradient(135deg, #ef4444, #dc2626);
+          color: #ffffff;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 2px 7px;
+          border-radius: 9999px;
+          letter-spacing: 0.3px;
+          box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+          animation: pulse-breaking 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-breaking {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        .badge-breaking {
+          font-size: 10px;
+          font-weight: 700;
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid rgba(239, 68, 68, 0.5);
+          color: #f87171;
+          padding: 2px 6px;
+          border-radius: 4px;
+          flex-shrink: 0;
+          margin-left: 6px;
+          display: inline-flex;
+          align-items: center;
+          gap: 3px;
+        }
+
+        .item-notes-btn {
+          background: rgba(255, 255, 255, 0.06);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: #94a3b8;
+          font-size: 11px;
+          cursor: pointer;
+          padding: 2px 6px;
+          border-radius: 4px;
+          margin-left: 6px;
+          transition: all 0.15s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .item-notes-btn:hover {
+          background: rgba(56, 189, 248, 0.15);
+          color: #38bdf8;
+          border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        /* Item Drawer with Changelog */
+        .item-notes-drawer {
+          background: rgba(15, 23, 42, 0.85);
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          padding: 10px 16px 12px 38px;
+          font-size: 12px;
+          color: #cbd5e1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          animation: slideDown 0.2s ease-out;
+        }
+
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notes-breaking-block {
+          background: rgba(239, 68, 68, 0.12);
+          border-left: 3px solid #ef4444;
+          padding: 6px 10px;
+          border-radius: 0 6px 6px 0;
+          color: #fca5a5;
+          font-size: 11.5px;
+        }
+
+        .notes-breaking-block strong {
+          color: #f87171;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .notes-breaking-block ul {
+          margin: 0;
+          padding-left: 18px;
+        }
+
+        .notes-highlights-block {
+          background: rgba(56, 189, 248, 0.08);
+          border-left: 3px solid #38bdf8;
+          padding: 6px 10px;
+          border-radius: 0 6px 6px 0;
+          color: #e2e8f0;
+          font-size: 11.5px;
+        }
+
+        .notes-highlights-block strong {
+          color: #38bdf8;
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .notes-highlights-block ul {
+          margin: 0;
+          padding-left: 18px;
+        }
+
+        .notes-link-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-top: 4px;
+        }
+
+        .notes-link-row a {
+          color: #38bdf8;
+          text-decoration: none;
+          font-size: 11px;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .notes-link-row a:hover {
+          text-decoration: underline;
+        }
+
+        /* Full Synthesis Panel View */
+        .synthesis-panel {
+          max-height: 280px;
+          overflow-y: auto;
+          padding: 12px 16px;
+          background: rgba(10, 15, 28, 0.85);
+          overscroll-behavior: contain;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(56, 189, 248, 0.5) rgba(255, 255, 255, 0.05);
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .synthesis-banner-breaking {
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.25));
+          border: 1px solid rgba(239, 68, 68, 0.5);
+          border-radius: 10px;
+          padding: 10px 14px;
+          color: #fecaca;
+        }
+
+        .synthesis-banner-breaking h5 {
+          margin: 0 0 6px 0;
+          font-size: 13px;
+          color: #f87171;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .synthesis-item-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.07);
+          border-radius: 8px;
+          padding: 10px 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .synthesis-item-card.has-breaking {
+          border-color: rgba(239, 68, 68, 0.4);
+          background: rgba(239, 68, 68, 0.05);
+        }
+
+        .synthesis-item-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .synthesis-item-title {
+          font-weight: 600;
+          color: #f1f5f9;
+          font-size: 13px;
+        }
+
         /* Progress Box */
         .progress-box {
           background: rgba(15, 23, 42, 0.6);
@@ -1791,12 +2171,20 @@ class RestartHAPanel extends HTMLElement {
             <!-- Updates Selective List -->
             <div class="updates-container" id="updatesContainer">
               <div class="updates-header">
-                <span id="updatesSummaryTitle">Mises à jour disponibles</span>
                 <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="updatesSummaryTitle">Mises à jour disponibles</span>
+                  <span class="breaking-pill-badge" id="breakingPillBadge" style="display: none;">⚠️ Breaking</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <button type="button" class="synthesis-toggle-btn" id="synthesisToggleBtn" title="Synthèse des versions & Breaking Changes">
+                    <svg style="width: 14px; height: 14px; fill: currentColor;" viewBox="0 0 24 24"><path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2M18 20H6V4H13V9H18V20M16 11V18.1L13.9 16L11.1 18.8L8.3 16L11.1 13.2L9 11.1H16Z"/></svg>
+                    <span id="synthesisBtnText">Synthèse des MAJ</span>
+                  </button>
                   <span id="updatesSummaryCount" style="font-size: 11px;">0/0 sélectionnés</span>
                   <button class="select-toggle-btn" id="selectToggleBtn">Tout basculer</button>
                 </div>
               </div>
+              <div class="synthesis-panel" id="synthesisPanel" style="display: none;"></div>
               <div class="updates-list" id="updatesList"></div>
             </div>
 
@@ -1989,6 +2377,10 @@ class RestartHAPanel extends HTMLElement {
       updatesContainer: root.getElementById("updatesContainer"),
       updatesSummaryTitle: root.getElementById("updatesSummaryTitle"),
       updatesSummaryCount: root.getElementById("updatesSummaryCount"),
+      breakingPillBadge: root.getElementById("breakingPillBadge"),
+      synthesisToggleBtn: root.getElementById("synthesisToggleBtn"),
+      synthesisBtnText: root.getElementById("synthesisBtnText"),
+      synthesisPanel: root.getElementById("synthesisPanel"),
       selectToggleBtn: root.getElementById("selectToggleBtn"),
       updatesList: root.getElementById("updatesList"),
       progressBox: root.getElementById("progressBox"),
@@ -2071,6 +2463,9 @@ class RestartHAPanel extends HTMLElement {
     };
     this._el.updateAllCb.onchange = (e) => this._toggleUpdateAll(e.target.checked);
     this._el.selectToggleBtn.onclick = () => this._toggleSelectAllItems();
+    if (this._el.synthesisToggleBtn) {
+      this._el.synthesisToggleBtn.onclick = () => this._toggleSynthesisMode();
+    }
     this._el.quickBtn.onclick = () => this._handleAction("quick_restart");
     this._el.systemBtn.onclick = () => this._handleAction("system_restart");
     this._el.safeBtn.onclick = () => this._handleAction("safe_boot");
@@ -2152,8 +2547,21 @@ class RestartHAPanel extends HTMLElement {
       this._el.updatesContainer.style.display = "block";
       this._el.updatesSummaryCount.textContent = `${selectedCount}/${totalCount} sélectionné${selectedCount > 1 ? "s" : ""}`;
 
-      // Build or update individual item checkboxes
-      this._renderUpdatesList(updates, isRunning);
+      this._loadAllReleaseNotes(updates);
+
+      if (this._synthesisMode) {
+        this._el.synthesisPanel.style.display = "flex";
+        this._el.updatesList.style.display = "none";
+        this._el.synthesisToggleBtn?.classList.add("active");
+        if (this._el.synthesisBtnText) this._el.synthesisBtnText.textContent = this.t("synthesis_back");
+        this._renderSynthesisView(updates);
+      } else {
+        this._el.synthesisPanel.style.display = "none";
+        this._el.updatesList.style.display = "block";
+        this._el.synthesisToggleBtn?.classList.remove("active");
+        if (this._el.synthesisBtnText) this._el.synthesisBtnText.textContent = this.t("synthesis_btn");
+        this._renderUpdatesList(updates, isRunning);
+      }
     } else {
       this._el.updatesContainer.style.display = "none";
     }
@@ -2230,25 +2638,363 @@ class RestartHAPanel extends HTMLElement {
     }
   }
 
+  _toggleSynthesisMode() {
+    this._synthesisMode = !this._synthesisMode;
+    this._updateUI();
+  }
+
+  _toggleItemNotes(entityId, updates) {
+    if (this._expandedItemNotes.has(entityId)) {
+      this._expandedItemNotes.delete(entityId);
+    } else {
+      this._expandedItemNotes.add(entityId);
+    }
+    this._lastRenderedKeys = null;
+    this._renderUpdatesList(updates, this._status.is_running);
+  }
+
+  async _fetchAndAnalyzeReleaseNotes(entityId, releaseSummary, releaseUrl) {
+    if (this._releaseNotesData[entityId] && !this._releaseNotesData[entityId].loading) {
+      return this._releaseNotesData[entityId];
+    }
+
+    let raw = null;
+    if (this._hass && this._hass.callWS) {
+      try {
+        const res = await this._hass.callWS({
+          type: "update/release_notes",
+          entity_id: entityId,
+        });
+        if (res) raw = String(res);
+      } catch (e) {
+        // Fallback to release_summary
+      }
+    }
+
+    if (!raw && releaseSummary) {
+      raw = String(releaseSummary);
+    }
+
+    if (!raw && this._hass?.states?.[entityId]?.attributes?.release_summary) {
+      raw = String(this._hass.states[entityId].attributes.release_summary);
+    }
+
+    const parsed = _analyzeReleaseNotes(raw);
+    this._releaseNotesData[entityId] = {
+      loading: false,
+      hasBreaking: parsed.hasBreaking,
+      breakingChanges: parsed.breakingChanges,
+      highlights: parsed.highlights,
+      rawText: parsed.rawText,
+      releaseUrl: releaseUrl || this._hass?.states?.[entityId]?.attributes?.release_url || null,
+    };
+
+    return this._releaseNotesData[entityId];
+  }
+
+  async _loadAllReleaseNotes(updates) {
+    if (!updates || updates.length === 0) return;
+    const toFetch = updates.filter(
+      (u) => !this._releaseNotesData[u.entity_id] || this._releaseNotesData[u.entity_id].loading
+    );
+    if (toFetch.length === 0) {
+      this._updateBreakingBadges(updates);
+      return;
+    }
+
+    toFetch.forEach((u) => {
+      this._releaseNotesData[u.entity_id] = { loading: true };
+    });
+
+    await Promise.allSettled(
+      toFetch.map((u) =>
+        this._fetchAndAnalyzeReleaseNotes(u.entity_id, u.release_summary, u.release_url)
+      )
+    );
+
+    this._updateBreakingBadges(updates);
+    if (this._synthesisMode) {
+      this._renderSynthesisView(updates);
+    }
+  }
+
+  _updateBreakingBadges(updates) {
+    if (!this._el) return;
+    const breakingEntities = updates.filter(
+      (u) => this._releaseNotesData[u.entity_id]?.hasBreaking
+    );
+    const count = breakingEntities.length;
+
+    if (this._el.breakingPillBadge) {
+      if (count > 0) {
+        this._el.breakingPillBadge.textContent = `⚠️ ${count} ${this.t("breaking_pill", { count, s: count > 1 ? "s" : "" })}`;
+        this._el.breakingPillBadge.style.display = "inline-block";
+      } else {
+        this._el.breakingPillBadge.style.display = "none";
+      }
+    }
+
+    if (this._el.updatesList) {
+      const items = this._el.updatesList.querySelectorAll(".update-item");
+      items.forEach((item) => {
+        const eid = item.dataset.entityId;
+        const info = this._releaseNotesData[eid];
+        let badge = item.querySelector(".badge-breaking");
+        if (info?.hasBreaking) {
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.className = "badge-breaking";
+            badge.textContent = this.t("breaking_badge");
+            item.querySelector(".item-left")?.appendChild(badge);
+          }
+        } else if (badge) {
+          badge.remove();
+        }
+      });
+    }
+  }
+
+  _createItemNotesDrawer(u) {
+    const data = this._releaseNotesData[u.entity_id];
+    const drawer = document.createElement("div");
+    drawer.className = "item-notes-drawer";
+
+    if (!data || data.loading) {
+      drawer.innerHTML = `<span style="color: #94a3b8; font-style: italic;">${this.t("loading_notes")}</span>`;
+      return drawer;
+    }
+
+    if (data.hasBreaking && data.breakingChanges.length > 0) {
+      const bBlock = document.createElement("div");
+      bBlock.className = "notes-breaking-block";
+      const bTitle = document.createElement("strong");
+      bTitle.textContent = `⚠️ ${this.t("breaking_title")} :`;
+      bBlock.appendChild(bTitle);
+      const ul = document.createElement("ul");
+      data.breakingChanges.forEach((txt) => {
+        const li = document.createElement("li");
+        li.textContent = txt;
+        ul.appendChild(li);
+      });
+      bBlock.appendChild(ul);
+      drawer.appendChild(bBlock);
+    }
+
+    if (data.highlights && data.highlights.length > 0) {
+      const hBlock = document.createElement("div");
+      hBlock.className = "notes-highlights-block";
+      const hTitle = document.createElement("strong");
+      hTitle.textContent = `✨ ${this.t("highlights_title")} :`;
+      hBlock.appendChild(hTitle);
+      const ul = document.createElement("ul");
+      data.highlights.forEach((txt) => {
+        const li = document.createElement("li");
+        li.textContent = txt;
+        ul.appendChild(li);
+      });
+      hBlock.appendChild(ul);
+      drawer.appendChild(hBlock);
+    } else if (!data.hasBreaking) {
+      const okLine = document.createElement("div");
+      okLine.style.color = "#86efac";
+      okLine.style.fontSize = "11.5px";
+      okLine.textContent = `✓ ${this.t("no_breaking_found")}`;
+      drawer.appendChild(okLine);
+    }
+
+    const relUrl = data.releaseUrl || u.release_url;
+    if (relUrl) {
+      const linkRow = document.createElement("div");
+      linkRow.className = "notes-link-row";
+      const a = document.createElement("a");
+      a.href = relUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = `🔗 ${this.t("official_notes")} (${u.latest_version})`;
+      linkRow.appendChild(a);
+      drawer.appendChild(linkRow);
+    }
+
+    return drawer;
+  }
+
+  _renderSynthesisView(updates) {
+    const panel = this._el.synthesisPanel;
+    if (!panel) return;
+    panel.innerHTML = "";
+
+    const headerRow = document.createElement("div");
+    headerRow.style.display = "flex";
+    headerRow.style.justifyContent = "space-between";
+    headerRow.style.alignItems = "center";
+    headerRow.style.marginBottom = "4px";
+
+    const titleBox = document.createElement("div");
+    titleBox.innerHTML = `
+      <strong style="font-size: 13px; color: #f1f5f9; display: block;">${this.t("synthesis_title")}</strong>
+      <span style="font-size: 11px; color: #94a3b8;">${this.t("synthesis_subtitle")}</span>
+    `;
+    headerRow.appendChild(titleBox);
+
+    const backBtn = document.createElement("button");
+    backBtn.type = "button";
+    backBtn.className = "select-toggle-btn";
+    backBtn.textContent = this.t("synthesis_back");
+    backBtn.onclick = () => {
+      this._synthesisMode = false;
+      this._updateUI();
+    };
+    headerRow.appendChild(backBtn);
+    panel.appendChild(headerRow);
+
+    const breakingEntities = updates.filter(
+      (u) => this._releaseNotesData[u.entity_id]?.hasBreaking
+    );
+    if (breakingEntities.length > 0) {
+      const banner = document.createElement("div");
+      banner.className = "synthesis-banner-breaking";
+      banner.innerHTML = `
+        <h5>⚠️ ${this.t("breaking_warning", { count: breakingEntities.length, s: breakingEntities.length > 1 ? "s" : "" })}</h5>
+        <div style="font-size: 11px; margin-bottom: 6px; opacity: 0.9;">Vérifiez les points suivants avant de mettre à jour afin d'éviter toute rupture de service :</div>
+      `;
+      const ul = document.createElement("ul");
+      ul.style.margin = "0";
+      ul.style.paddingLeft = "18px";
+      ul.style.fontSize = "11.5px";
+
+      breakingEntities.forEach((u) => {
+        const info = this._releaseNotesData[u.entity_id];
+        (info?.breakingChanges?.length ? info.breakingChanges : ["Changement bloquant signalé dans les notes de version"]).forEach((txt) => {
+          const li = document.createElement("li");
+          li.innerHTML = `<strong>${u.title || u.name} :</strong> `;
+          li.appendChild(document.createTextNode(txt));
+          ul.appendChild(li);
+        });
+      });
+      banner.appendChild(ul);
+      panel.appendChild(banner);
+    } else {
+      const safeBanner = document.createElement("div");
+      safeBanner.className = "synthesis-banner-safe";
+      safeBanner.style.background = "rgba(34, 197, 94, 0.12)";
+      safeBanner.style.border = "1px solid rgba(34, 197, 94, 0.35)";
+      safeBanner.style.borderRadius = "8px";
+      safeBanner.style.padding = "9px 12px";
+      safeBanner.style.color = "#86efac";
+      safeBanner.style.fontSize = "12px";
+      safeBanner.style.display = "flex";
+      safeBanner.style.alignItems = "center";
+      safeBanner.style.gap = "8px";
+      safeBanner.textContent = `✅ ${this.t("no_breaking_found")} (${updates.length} composants vérifiés).`;
+      panel.appendChild(safeBanner);
+    }
+
+    updates.forEach((u) => {
+      const card = document.createElement("div");
+      const info = this._releaseNotesData[u.entity_id];
+      const hasBreaking = !!info?.hasBreaking;
+      card.className = `synthesis-item-card ${hasBreaking ? "has-breaking" : ""}`;
+
+      const cardHead = document.createElement("div");
+      cardHead.className = "synthesis-item-header";
+
+      const titleSpan = document.createElement("span");
+      titleSpan.className = "synthesis-item-title";
+      titleSpan.textContent = u.title || u.name;
+      cardHead.appendChild(titleSpan);
+
+      const badges = document.createElement("div");
+      badges.style.display = "flex";
+      badges.style.alignItems = "center";
+      badges.style.gap = "6px";
+
+      if (hasBreaking) {
+        const b = document.createElement("span");
+        b.className = "badge-breaking";
+        b.textContent = this.t("breaking_badge");
+        badges.appendChild(b);
+      }
+
+      const v = document.createElement("span");
+      v.className = "version-tag";
+      v.textContent = `${u.installed_version} ➜ ${u.latest_version}`;
+      badges.appendChild(v);
+
+      cardHead.appendChild(badges);
+      card.appendChild(cardHead);
+
+      if (hasBreaking && info?.breakingChanges?.length > 0) {
+        const bBlock = document.createElement("div");
+        bBlock.className = "notes-breaking-block";
+        const bTitle = document.createElement("strong");
+        bTitle.textContent = `⚠️ ${this.t("breaking_title")} :`;
+        bBlock.appendChild(bTitle);
+        const ul = document.createElement("ul");
+        info.breakingChanges.forEach((txt) => {
+          const li = document.createElement("li");
+          li.textContent = txt;
+          ul.appendChild(li);
+        });
+        bBlock.appendChild(ul);
+        card.appendChild(bBlock);
+      }
+
+      if (info?.highlights && info.highlights.length > 0) {
+        const hBlock = document.createElement("div");
+        hBlock.className = "notes-highlights-block";
+        const hTitle = document.createElement("strong");
+        hTitle.textContent = `✨ ${this.t("highlights_title")} :`;
+        hBlock.appendChild(hTitle);
+        const ul = document.createElement("ul");
+        info.highlights.forEach((txt) => {
+          const li = document.createElement("li");
+          li.textContent = txt;
+          ul.appendChild(li);
+        });
+        hBlock.appendChild(ul);
+        card.appendChild(hBlock);
+      }
+
+      const relUrl = info?.releaseUrl || u.release_url;
+      if (relUrl) {
+        const linkRow = document.createElement("div");
+        linkRow.className = "notes-link-row";
+        const a = document.createElement("a");
+        a.href = relUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = `🔗 ${this.t("official_notes")} (${u.latest_version})`;
+        linkRow.appendChild(a);
+        card.appendChild(linkRow);
+      }
+
+      panel.appendChild(card);
+    });
+  }
+
   _renderUpdatesList(updates, isRunning) {
     const listEl = this._el.updatesList;
     if (!listEl) return;
 
-    // Check if items structure changed
-    const currentKeys = updates.map((u) => u.entity_id).join("|");
+    const currentKeys = updates.map((u) => `${u.entity_id}:${this._expandedItemNotes.has(u.entity_id)}`).join("|");
     if (this._lastRenderedKeys !== currentKeys) {
       this._lastRenderedKeys = currentKeys;
       listEl.innerHTML = "";
 
       updates.forEach((u) => {
-        const itemRow = document.createElement("label");
+        const itemGroup = document.createElement("div");
+        itemGroup.className = "update-item-group";
+        itemGroup.dataset.entityId = u.entity_id;
+
+        const itemRow = document.createElement("div");
         itemRow.className = "update-item";
         itemRow.dataset.entityId = u.entity_id;
 
         const isChecked = this._selectedEntityIds.has(u.entity_id);
 
-        const itemLeft = document.createElement("div");
+        const itemLeft = document.createElement("label");
         itemLeft.className = "item-left";
+        itemLeft.style.cursor = "pointer";
 
         const cbInput = document.createElement("input");
         cbInput.type = "checkbox";
@@ -2256,6 +3002,9 @@ class RestartHAPanel extends HTMLElement {
         cbInput.dataset.entityId = u.entity_id;
         cbInput.checked = isChecked;
         cbInput.disabled = isRunning;
+        cbInput.addEventListener("change", () => {
+          this._toggleItemSelection(u.entity_id, cbInput.checked);
+        });
         itemLeft.appendChild(cbInput);
 
         const itemName = document.createElement("span");
@@ -2263,23 +3012,49 @@ class RestartHAPanel extends HTMLElement {
         itemName.textContent = u.title || u.name || "";
         itemLeft.appendChild(itemName);
 
+        const notesInfo = this._releaseNotesData[u.entity_id];
+        if (notesInfo?.hasBreaking) {
+          const bBadge = document.createElement("span");
+          bBadge.className = "badge-breaking";
+          bBadge.textContent = this.t("breaking_badge");
+          itemLeft.appendChild(bBadge);
+        }
+
+        const itemRight = document.createElement("div");
+        itemRight.className = "item-right";
+        itemRight.style.display = "flex";
+        itemRight.style.alignItems = "center";
+        itemRight.style.gap = "6px";
+
         const versionTag = document.createElement("span");
         versionTag.className = "version-tag";
         versionTag.textContent = `${u.installed_version || ""} ➜ ${u.latest_version || ""}`;
+        itemRight.appendChild(versionTag);
+
+        const notesBtn = document.createElement("button");
+        notesBtn.type = "button";
+        notesBtn.className = "item-notes-btn";
+        const isExpanded = this._expandedItemNotes.has(u.entity_id);
+        notesBtn.innerHTML = `<span>${isExpanded ? "▲" : "▼"}</span> <span>${this.t("view_notes") || "Notes"}</span>`;
+        notesBtn.title = "Notes de version & changelog";
+        notesBtn.onclick = (e) => {
+          e.stopPropagation();
+          this._toggleItemNotes(u.entity_id, updates);
+        };
+        itemRight.appendChild(notesBtn);
 
         itemRow.appendChild(itemLeft);
-        itemRow.appendChild(versionTag);
+        itemRow.appendChild(itemRight);
+        itemGroup.appendChild(itemRow);
 
-        const cb = itemRow.querySelector(".item-checkbox");
-        cb.addEventListener("change", (e) => {
-          e.stopPropagation();
-          this._toggleItemSelection(u.entity_id, cb.checked);
-        });
+        if (isExpanded) {
+          const drawer = this._createItemNotesDrawer(u);
+          itemGroup.appendChild(drawer);
+        }
 
-        listEl.appendChild(itemRow);
+        listEl.appendChild(itemGroup);
       });
     } else {
-      // Sync checkbox states without re-creating DOM
       const checkboxes = listEl.querySelectorAll(".item-checkbox");
       checkboxes.forEach((cb) => {
         const eid = cb.dataset.entityId;
