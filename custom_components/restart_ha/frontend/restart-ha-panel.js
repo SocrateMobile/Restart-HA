@@ -476,7 +476,6 @@ class RestartHAPanel extends HTMLElement {
       current_entity_progress: 0,
       global_progress: 0,
       status_message: "",
-      restart_intercepted: false,
       available_updates: [],
     };
     this._updateAllChecked = true;
@@ -2190,10 +2189,6 @@ class RestartHAPanel extends HTMLElement {
 
             <!-- Progress Box -->
             <div class="progress-box" id="progressBox">
-              <div class="intercept-alert" id="interceptAlert">
-                <span>⚠️ Redémarrage automatique intercepté avec succès : en attente de la fin des autres MAJ.</span>
-              </div>
-
               <!-- Status line -->
               <div class="progress-title-row">
                 <span class="status-badge">
@@ -2384,7 +2379,6 @@ class RestartHAPanel extends HTMLElement {
       selectToggleBtn: root.getElementById("selectToggleBtn"),
       updatesList: root.getElementById("updatesList"),
       progressBox: root.getElementById("progressBox"),
-      interceptAlert: root.getElementById("interceptAlert"),
       statusSpinner: root.getElementById("statusSpinner"),
       statusMsgText: root.getElementById("statusMsgText"),
       headerGlobalPct: root.getElementById("headerGlobalPct"),
@@ -2529,7 +2523,6 @@ class RestartHAPanel extends HTMLElement {
     const globalProgress = Math.max(0, Math.min(100, Math.round(this._status.global_progress || 0)));
     const entityProgress = Math.max(0, Math.min(100, Math.round(this._status.current_entity_progress || 0)));
     const statusMsg = this._status.status_message || "";
-    const isIntercepted = this._status.restart_intercepted;
 
     // 1. Update master checkbox & count badge
     this._el.updateAllCb.disabled = isRunning;
@@ -2572,8 +2565,6 @@ class RestartHAPanel extends HTMLElement {
       this._el.statusSpinner.style.display = isRunning ? "inline-block" : "none";
       this._el.statusMsgText.textContent = statusMsg || "Traitement en cours...";
       this._el.headerGlobalPct.textContent = `${globalProgress}%`;
-
-      this._el.interceptAlert.style.display = isIntercepted ? "flex" : "none";
 
       const total = this._status.total_updates || selectedCount || totalCount || 0;
       const idx = this._status.current_index || 0;
@@ -2803,7 +2794,7 @@ class RestartHAPanel extends HTMLElement {
     }
 
     const relUrl = data.releaseUrl || u.release_url;
-    if (relUrl) {
+    if (typeof relUrl === "string" && (relUrl.startsWith("https://") || relUrl.startsWith("http://"))) {
       const linkRow = document.createElement("div");
       linkRow.className = "notes-link-row";
       const a = document.createElement("a");
@@ -2866,7 +2857,9 @@ class RestartHAPanel extends HTMLElement {
         const info = this._releaseNotesData[u.entity_id];
         (info?.breakingChanges?.length ? info.breakingChanges : ["Changement bloquant signalé dans les notes de version"]).forEach((txt) => {
           const li = document.createElement("li");
-          li.innerHTML = `<strong>${u.title || u.name} :</strong> `;
+          const strong = document.createElement("strong");
+          strong.textContent = `${u.title || u.name} : `;
+          li.appendChild(strong);
           li.appendChild(document.createTextNode(txt));
           ul.appendChild(li);
         });
@@ -2956,7 +2949,7 @@ class RestartHAPanel extends HTMLElement {
       }
 
       const relUrl = info?.releaseUrl || u.release_url;
-      if (relUrl) {
+      if (typeof relUrl === "string" && (relUrl.startsWith("https://") || relUrl.startsWith("http://"))) {
         const linkRow = document.createElement("div");
         linkRow.className = "notes-link-row";
         const a = document.createElement("a");

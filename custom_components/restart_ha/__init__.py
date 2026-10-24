@@ -134,7 +134,6 @@ class RestartOrchestrator:
             "current_entity_progress": self.current_entity_progress,
             "global_progress": self.global_progress,
             "status_message": self.status_message,
-            "restart_intercepted": self.restart_intercepted,
             "errors": self.errors,
             "available_updates": self.get_available_updates(),
             "scheduled_job": self.scheduled_job,
@@ -694,7 +693,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         active_entries = [k for k in domain_data if not k.startswith("_") and k != "orchestrator"]
         if orchestrator and not active_entries:
             orchestrator.abort_process()
-            orchestrator.disable_restart_interception()
     return unload_ok
 
 

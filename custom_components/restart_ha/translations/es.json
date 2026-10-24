@@ -33,7 +33,7 @@
     },
     "update_all": {
       "name": "Actualizar todo",
-      "description": "Ejecuta todas las actualizaciones disponibles interceptando reinicios intermedios.",
+      "description": "Ejecuta todas las actualizaciones disponibles antes de la acción final.",
       "fields": {
         "action": {
           "name": "Acción final",
