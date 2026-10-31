@@ -6,7 +6,7 @@ import os
 
 DOMAIN = "restart_ha"
 NAME = "Restart HA"
-VERSION = "3.0.0"
+VERSION = "3.0.1"
 
 PANEL_URL_PATH = "restart_ha"
 PANEL_TITLE = "Restart HA"

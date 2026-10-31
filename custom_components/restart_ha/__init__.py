@@ -807,7 +807,9 @@ def _register_services(hass: HomeAssistant, orchestrator: RestartOrchestrator) -
     async def handle_cancel_schedule(call: ServiceCall) -> None:
         await orchestrator.cancel_schedule()
 
-    async_register_admin_service(hass, DOMAIN, "quick_restart", handle_quick_restart)
-    async_register_admin_service(hass, DOMAIN, "system_restart", handle_system_restart)
-    async_register_admin_service(hass, DOMAIN, "update_all", handle_update_all)
-    async_register_admin_service(hass, DOMAIN, "cancel_schedule", handle_cancel_schedule)
+    schema_service = vol.Schema({}, extra=vol.ALLOW_EXTRA)
+
+    async_register_admin_service(hass, DOMAIN, "quick_restart", handle_quick_restart, schema=schema_service)
+    async_register_admin_service(hass, DOMAIN, "system_restart", handle_system_restart, schema=schema_service)
+    async_register_admin_service(hass, DOMAIN, "update_all", handle_update_all, schema=schema_service)
+    async_register_admin_service(hass, DOMAIN, "cancel_schedule", handle_cancel_schedule, schema=schema_service)
