@@ -545,11 +545,8 @@ class RestartHAPanel extends HTMLElement {
                 const act = this._status.current_action;
                 if (act === "cancel") {
                   setTimeout(() => this._navigateHome(), 2500);
-                } else if (act === "quick_restart") {
-                  this._triggerFinalRestart("quick_restart");
-                } else if (act === "system_restart") {
-                  this._triggerFinalRestart("system_restart");
                 }
+                // Le backend exécute déjà l'action finale (quick_restart / system_restart / safe_boot)
               }
             }
           },

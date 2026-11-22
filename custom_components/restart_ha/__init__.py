@@ -701,6 +701,13 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         active_entries = [k for k in domain_data if not k.startswith("_") and k != "orchestrator"]
         if orchestrator and not active_entries:
             orchestrator.abort_process()
+            sched_task = getattr(orchestrator, "_schedule_task", None)
+            if sched_task and not sched_task.done():
+                sched_task.cancel()
+            try:
+                frontend.async_remove_panel(hass, PANEL_URL_PATH)
+            except Exception:
+                pass
     return unload_ok
 
 
